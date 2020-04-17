@@ -35,15 +35,15 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 
     client.eventDispatcher.on(MessageCreateEvent::class.java).asFlow()
         .filter { event -> event.message.author.map { !it.isBot }.orElse(false) }
+        .filter { event ->
+            val mention = event.message.content.map { it.substringBefore(' ') }.orElse(null) ?: return@filter false
+            val selfId = client.selfId.map { it.asString() }.orElse(null) ?: return@filter false
+
+            mention == """<@!$selfId>"""
+        }
         .onEach { event ->
-            logger.trace { event.message.content.orElse("") }
-
             val parser = event.message.content.map { CommandParser(it) }.orElse(null) ?: return@onEach
-
-            val selfId = client.selfId.orElse(null) ?: return@onEach
-            val mention = parser.next()
-            if (mention != """<@!${selfId.asString()}>""") return@onEach
-
+            parser.next() // skips mention
             val commandName = parser.next() ?: return@onEach
             val command = commandRepository.findByName(commandName) ?: return@onEach
             command.handler.invoke(parser, event)
