@@ -1,4 +1,3 @@
-import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -19,16 +18,20 @@ val kotlinCoroutinesVersion by extra("1.3.5")
 val kotlinSerializationVersion by extra("0.20.0")
 
 val discord4jVersion by extra("3.0.13")
+val influxdbVersion by extra("1.6.0")
 val kotlinLoggingVersion by extra("1.7.9")
 val logbackVersion by extra("1.2.3")
 val spekVersion by extra("2.0.10")
 
 dependencies {
-    implementation(kotlin("stdlib", KotlinCompilerVersion.VERSION))
+    implementation(kotlin("stdlib-jdk8"))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinCoroutinesVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:$kotlinCoroutinesVersion")
 
     implementation("com.discord4j:discord4j-core:$discord4jVersion")
+
+    implementation("com.influxdb:influxdb-client-java:$influxdbVersion")
+    implementation("com.influxdb:influxdb-client-kotlin:$influxdbVersion")
 
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
     implementation("io.github.microutils:kotlin-logging:$kotlinLoggingVersion")
