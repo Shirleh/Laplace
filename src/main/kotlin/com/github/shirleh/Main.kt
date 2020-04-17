@@ -2,7 +2,10 @@ package com.github.shirleh
 
 import com.github.shirleh.command.CommandParser
 import com.github.shirleh.command.CommandRegistry
+import com.github.shirleh.datacollection.PointRepositoryImpl
 import com.github.shirleh.monitoring.MonitoringCommandSet
+import com.influxdb.client.domain.WritePrecision
+import com.influxdb.client.write.Point
 import discord4j.core.DiscordClientBuilder
 import discord4j.core.event.domain.guild.MemberJoinEvent
 import discord4j.core.event.domain.message.MessageCreateEvent
@@ -13,6 +16,8 @@ import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
+import java.time.Instant
+import kotlin.random.Random
 import kotlin.system.exitProcess
 
 val logger = KotlinLogging.logger { }
@@ -45,8 +50,18 @@ fun main(args: Array<String>) = runBlocking<Unit> {
         }
         .launchIn(this)
 
+    val pointRepository = PointRepositoryImpl()
+
     client.eventDispatcher.on(MessageCreateEvent::class.java).asFlow()
-        .onEach { logger.trace { "Collecting MessageCreateEvent... " } }
+        .onEach {
+            logger.trace { "Collecting MessageCreateEvent... " }
+
+            Point.measurement("cupcakes")
+                .addTag("color", "pink")
+                .addField("score", Random.nextInt())
+                .time(Instant.now(), WritePrecision.S)
+                .let { pointRepository.save(it) }
+        }
         .launchIn(this)
 
     client.eventDispatcher.on(MemberJoinEvent::class.java).asFlow()
