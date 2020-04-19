@@ -8,6 +8,10 @@ plugins {
 group = "org.github.shirleh"
 version = "1.0-SNAPSHOT"
 
+application {
+    mainClassName = "com.github.shirleh.MainKt"
+}
+
 repositories {
     mavenCentral()
     jcenter()
