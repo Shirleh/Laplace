@@ -9,16 +9,15 @@ Laplace is a Discord bot which collects statistics about a server and its users.
 
 ### Installation
 - Clone the repository.  
-```
+```shell script
 git clone https://github.com/Shirleh/Laplace.git
 ```
-- Set up an environment variable for your Discord bot token.  
+- Setup and run an instance of InfluxDB, e.g. with Docker
+```shell script
+docker run --name influxdb -p 9999:9999 quay.io/influxdb/influxdb:2.0.0-beta
 ```
-laplace-token=<token>
-```
-- Setup and run an instance of InfluxDB.
 - Run the bot with Gradle.
-```
+```shell script
 ./gradlew run --args="bot_token" --console plain
 ```
 
