@@ -13,7 +13,7 @@ import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger { }
 
-suspend fun addDataCollectionListeners(client: DiscordClient) = coroutineScope {
+fun addDataCollectionListeners(client: DiscordClient) {
     val pointRepository = PointRepositoryImpl()
 
     client.eventDispatcher.on(MessageCreateEvent::class.java).asFlow()
@@ -34,9 +34,9 @@ suspend fun addDataCollectionListeners(client: DiscordClient) = coroutineScope {
 
             logger.trace { "Collected data from MessageCreateEvent" }
         }
-        .launchIn(this)
+        .launchIn(GlobalScope)
 
     client.eventDispatcher.on(MemberJoinEvent::class.java).asFlow()
         .onEach { logger.trace { "Collecting MemberJoinEvent... " } }
-        .launchIn(this)
+        .launchIn(GlobalScope)
 }
