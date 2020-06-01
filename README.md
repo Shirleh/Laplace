@@ -16,6 +16,12 @@ git clone https://github.com/Shirleh/Laplace.git
 ```shell script
 docker run --name influxdb -p 9999:9999 quay.io/influxdb/influxdb:2.0.0-beta
 ```
+- Adjust the following properties in `src/main/resources/influx2.properties` to match your InfluxDB instance
+```
+influx2.org=YOUR_ORG
+influx2.bucket=YOUR_BUCKET
+influx2.token=YOUR_TOKEN
+```
 - Run the bot with Gradle.
 ```shell script
 ./gradlew run --args="bot_token" --console plain
