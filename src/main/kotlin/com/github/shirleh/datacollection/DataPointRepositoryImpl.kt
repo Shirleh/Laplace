@@ -3,7 +3,7 @@ package com.github.shirleh.datacollection
 import com.influxdb.client.InfluxDBClientFactory
 import com.influxdb.client.write.Point
 
-class PointRepositoryImpl : PointRepository {
+class DataPointRepositoryImpl : DataPointRepository {
 
     private val influxDBClient = InfluxDBClientFactory.create()
 

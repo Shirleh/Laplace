@@ -14,11 +14,11 @@ import mu.KotlinLogging
 private val logger = KotlinLogging.logger { }
 
 fun addDataCollectionListeners(client: DiscordClient) {
-    val pointRepository = PointRepositoryImpl()
+    val dataPointRepository = DataPointRepositoryImpl()
 
     client.eventDispatcher.on(MessageCreateEvent::class.java).asFlow()
         .onEach { event ->
-            logger.trace { "Collecting data from MessageCreateEvent..." }
+            logger.entry(event)
 
             val channelId = event.message.channelId.asString()
             val authorId = event.message.author.map { it.id.asString() }.orElse(null) ?: return@onEach
@@ -30,13 +30,27 @@ fun addDataCollectionListeners(client: DiscordClient) {
                 .addTag("author", authorId)
                 .addField("length", content.length)
                 .time(timestamp, WritePrecision.S)
-                .let { pointRepository.save(it) }
+                .let { dataPointRepository.save(it) }
 
-            logger.trace { "Collected data from MessageCreateEvent" }
+            logger.exit()
         }
         .launchIn(GlobalScope)
 
     client.eventDispatcher.on(MemberJoinEvent::class.java).asFlow()
-        .onEach { logger.trace { "Collecting MemberJoinEvent... " } }
+        .onEach {event ->
+            logger.entry(event)
+
+            val creationDate = event.member.id.timestamp.epochSecond
+            val isBot = event.member.isBot
+            val timestamp = event.member.joinTime
+
+            Point.measurement("guildMember")
+                .addField("creationDate", creationDate)
+                .addField("isBot", isBot)
+                .time(timestamp, WritePrecision.S)
+                .let { dataPointRepository.save(it) }
+
+            logger.exit()
+        }
         .launchIn(GlobalScope)
 }
