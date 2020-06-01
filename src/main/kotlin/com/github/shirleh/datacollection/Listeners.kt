@@ -37,6 +37,20 @@ fun addDataCollectionListeners(client: DiscordClient) {
         .launchIn(GlobalScope)
 
     client.eventDispatcher.on(MemberJoinEvent::class.java).asFlow()
-        .onEach { logger.trace { "Collecting MemberJoinEvent... " } }
+        .onEach {event ->
+            logger.trace { "Collecting MemberJoinEvent... " }
+
+            val creationDate = event.member.id.timestamp.epochSecond
+            val isBot = event.member.isBot
+            val timestamp = event.member.joinTime
+
+            Point.measurement("guildMember")
+                .addField("creationDate", creationDate)
+                .addField("isBot", isBot)
+                .time(timestamp, WritePrecision.S)
+                .let { pointRepository.save(it) }
+
+            logger.trace { "Collected data from MemberJoinEvent" }
+        }
         .launchIn(GlobalScope)
 }
