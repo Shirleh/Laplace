@@ -18,7 +18,7 @@ fun addDataCollectionListeners(client: DiscordClient) {
 
     client.eventDispatcher.on(MessageCreateEvent::class.java).asFlow()
         .onEach { event ->
-            logger.trace { "Collecting data from MessageCreateEvent..." }
+            logger.entry(event)
 
             val channelId = event.message.channelId.asString()
             val authorId = event.message.author.map { it.id.asString() }.orElse(null) ?: return@onEach
@@ -32,13 +32,13 @@ fun addDataCollectionListeners(client: DiscordClient) {
                 .time(timestamp, WritePrecision.S)
                 .let { pointRepository.save(it) }
 
-            logger.trace { "Collected data from MessageCreateEvent" }
+            logger.exit()
         }
         .launchIn(GlobalScope)
 
     client.eventDispatcher.on(MemberJoinEvent::class.java).asFlow()
         .onEach {event ->
-            logger.trace { "Collecting MemberJoinEvent... " }
+            logger.entry(event)
 
             val creationDate = event.member.id.timestamp.epochSecond
             val isBot = event.member.isBot
@@ -50,7 +50,7 @@ fun addDataCollectionListeners(client: DiscordClient) {
                 .time(timestamp, WritePrecision.S)
                 .let { pointRepository.save(it) }
 
-            logger.trace { "Collected data from MemberJoinEvent" }
+            logger.exit()
         }
         .launchIn(GlobalScope)
 }
