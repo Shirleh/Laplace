@@ -14,7 +14,7 @@ import mu.KotlinLogging
 private val logger = KotlinLogging.logger { }
 
 fun addDataCollectionListeners(client: DiscordClient) {
-    val pointRepository = PointRepositoryImpl()
+    val dataPointRepository = DataPointRepositoryImpl()
 
     client.eventDispatcher.on(MessageCreateEvent::class.java).asFlow()
         .onEach { event ->
@@ -30,7 +30,7 @@ fun addDataCollectionListeners(client: DiscordClient) {
                 .addTag("author", authorId)
                 .addField("length", content.length)
                 .time(timestamp, WritePrecision.S)
-                .let { pointRepository.save(it) }
+                .let { dataPointRepository.save(it) }
 
             logger.exit()
         }
@@ -48,7 +48,7 @@ fun addDataCollectionListeners(client: DiscordClient) {
                 .addField("creationDate", creationDate)
                 .addField("isBot", isBot)
                 .time(timestamp, WritePrecision.S)
-                .let { pointRepository.save(it) }
+                .let { dataPointRepository.save(it) }
 
             logger.exit()
         }
