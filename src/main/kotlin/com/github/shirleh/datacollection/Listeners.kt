@@ -40,11 +40,16 @@ fun addDataCollectionListeners(client: DiscordClient) {
         .onEach {event ->
             logger.entry(event)
 
+            val guildId = event.guildId.asString()
+            val guildMemberId = event.member.id.asString()
             val creationDate = event.member.id.timestamp.epochSecond
             val isBot = event.member.isBot
             val timestamp = event.member.joinTime
 
             Point.measurement("guildMember")
+                .addTag("event", "join")
+                .addTag("guildId", guildId)
+                .addTag("guildMemberId", guildMemberId)
                 .addField("creationDate", creationDate)
                 .addField("isBot", isBot)
                 .time(timestamp, WritePrecision.S)
