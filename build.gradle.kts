@@ -36,6 +36,7 @@ dependencies {
 
     implementation("com.influxdb:influxdb-client-java:$influxdbVersion")
     implementation("com.influxdb:influxdb-client-kotlin:$influxdbVersion")
+    implementation("com.influxdb:flux-dsl:$influxdbVersion")
 
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
     implementation("io.github.microutils:kotlin-logging:$kotlinLoggingVersion")
