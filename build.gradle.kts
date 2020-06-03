@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     application
+    id("com.github.johnrengelman.shadow") version "5.2.0"
     kotlin("jvm") version "1.3.72"
 }
 
@@ -54,6 +55,15 @@ tasks {
     withType<Test> {
         useJUnitPlatform {
             includeEngines("spek2")
+        }
+    }
+    withType<Jar> {
+        manifest {
+            attributes(
+                mapOf(
+                    "Main-Class" to application.mainClassName
+                )
+            )
         }
     }
 }
