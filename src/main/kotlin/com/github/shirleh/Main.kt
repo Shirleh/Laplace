@@ -8,11 +8,11 @@ import kotlinx.coroutines.runBlocking
 import kotlin.system.exitProcess
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    if (args.isEmpty()) {
+    val token = getToken(args)
+    if (token == null) {
         System.err.println("Please provide a Discord token for the bot.")
         exitProcess(1)
     }
-    val token = args[0]
     val client = DiscordClientBuilder(token).build()
 
     addCommandListener(client)
@@ -20,3 +20,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 
     client.login().awaitFirstOrNull()
 }
+
+private fun getToken(args: Array<String>): String? =
+    if (args.isNotEmpty()) args[0]
+    else System.getenv("DISCORD_TOKEN")
