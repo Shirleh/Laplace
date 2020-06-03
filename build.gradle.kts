@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     application
-    kotlin("jvm") version "1.3.71"
+    kotlin("jvm") version "1.3.72"
 }
 
 group = "org.github.shirleh"
@@ -17,12 +17,11 @@ repositories {
     jcenter()
 }
 
-val kotlinVersion by extra("1.3.71")
-val kotlinCoroutinesVersion by extra("1.3.5")
-val kotlinSerializationVersion by extra("0.20.0")
+val kotlinVersion by extra("1.3.72")
+val kotlinCoroutinesVersion by extra("1.3.7")
 
-val discord4jVersion by extra("3.0.13")
-val influxdbVersion by extra("1.6.0")
+val discord4jVersion by extra("3.0.14")
+val influxDBVersion by extra("1.8.0")
 val kotlinLoggingVersion by extra("1.7.9")
 val logbackVersion by extra("1.2.3")
 val spekVersion by extra("2.0.10")
@@ -34,9 +33,9 @@ dependencies {
 
     implementation("com.discord4j:discord4j-core:$discord4jVersion")
 
-    implementation("com.influxdb:influxdb-client-java:$influxdbVersion")
-    implementation("com.influxdb:influxdb-client-kotlin:$influxdbVersion")
-    implementation("com.influxdb:flux-dsl:$influxdbVersion")
+    implementation("com.influxdb:influxdb-client-java:$influxDBVersion")
+    implementation("com.influxdb:influxdb-client-kotlin:$influxDBVersion")
+    implementation("com.influxdb:flux-dsl:$influxDBVersion")
 
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
     implementation("io.github.microutils:kotlin-logging:$kotlinLoggingVersion")
