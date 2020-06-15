@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  influxdb:
+    image: quay.io/influxdb/influxdb:2.0.0-beta
+    ports:
+    - "9999:9999"
+    volumes:
+      - influx_data:/var/lib/influxdb
+
+  app:
+    depends_on:
+      - influxdb
+    build: .
+    command: {discord_token}
+    environment:
+      INFLUX_URL: influxdb:9999
+      INFLUX_ORG: tph
+      INFLUX_BUCKET: laplace
+      INFLUX_TOKEN_FILE: /run/secrets/influx_token
+    secrets:
+      - influx_token
+
+secrets:
+  influx_token:
+    file: influx_token.txt
+
+volumes:
+  influx_data:
