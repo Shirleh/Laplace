@@ -2,53 +2,60 @@ package com.github.shirleh.datacollection
 
 import com.influxdb.client.domain.WritePrecision
 import com.influxdb.client.write.Point
-import discord4j.core.DiscordClient
 import discord4j.core.event.domain.guild.MemberJoinEvent
 import discord4j.core.event.domain.guild.MemberLeaveEvent
 import discord4j.core.event.domain.message.MessageCreateEvent
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.reactive.asFlow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
 import mu.KotlinLogging
 import java.time.Duration
 import java.time.Instant
 
-private val logger = KotlinLogging.logger { }
+object DataCollectionHandler {
 
-fun addDataCollectionListeners(client: DiscordClient) {
-    val dataPointRepository = DataPointRepositoryImpl()
-    val guildMemberQueryRepository = GuildMemberQueryRepositoryImpl()
+    private val logger = KotlinLogging.logger { }
 
-    client.eventDispatcher.on(MessageCreateEvent::class.java).asFlow()
-        .onEach { event ->
+    private val dataPointRepository = DataPointRepositoryImpl()
+    private val guildMemberQueryRepository = GuildMemberQueryRepositoryImpl()
+
+    /**
+     * Collects message data from the incoming [flow] of [MessageCreateEvent]s.
+     */
+    suspend fun collectMessageData(flow: Flow<MessageCreateEvent>) = flow
+        .collect { event ->
             logger.entry(event)
 
-            val channelId = event.message.channelId.asString()
-            val authorId = event.message.author.map { it.id.asString() }.orElse(null) ?: return@onEach
-            val content = event.message.content.orElse(null) ?: return@onEach
-            val timestamp = event.message.timestamp
+            val message = event.message
+
+            val channelId = message.channelId.asString()
+            val authorId = message.author.map { it.id.asString() }.orElse(null) ?: return@collect
+            val contentLength = message.content.let { if (it.isBlank()) return@collect else it.length }
+            val timestamp = message.timestamp
 
             Point.measurement("message")
                 .addTag("channel", channelId)
                 .addTag("author", authorId)
-                .addField("length", content.length)
+                .addField("length", contentLength)
                 .time(timestamp, WritePrecision.S)
                 .let { dataPointRepository.save(it) }
 
             logger.exit()
         }
-        .launchIn(GlobalScope)
 
-    client.eventDispatcher.on(MemberJoinEvent::class.java).asFlow()
-        .onEach {event ->
+    /**
+     * Collects member join data from the incoming [flow] of [MemberJoinEvent]s.
+     */
+    suspend fun collectJoinData(flow: Flow<MemberJoinEvent>) = flow
+        .collect { event ->
             logger.entry(event)
 
+            val member = event.member
+
             val guildId = event.guildId.asString()
-            val guildMemberId = event.member.id.asString()
-            val creationDate = event.member.id.timestamp.epochSecond
-            val isBot = event.member.isBot
-            val timestamp = event.member.joinTime
+            val guildMemberId = member.id.asString()
+            val creationDate = member.id.timestamp.epochSecond
+            val isBot = member.isBot
+            val timestamp = member.joinTime
 
             Point.measurement("guildMember")
                 .addTag("event", "join")
@@ -61,10 +68,12 @@ fun addDataCollectionListeners(client: DiscordClient) {
 
             logger.exit()
         }
-        .launchIn(GlobalScope)
 
-    client.eventDispatcher.on(MemberLeaveEvent::class.java).asFlow()
-        .onEach { event ->
+    /**
+     * Collects member leave data from the incoming [flow] of [MemberLeaveEvent]s.
+     */
+    suspend fun collectLeaveData(flow: Flow<MemberLeaveEvent>) = flow
+        .collect { event ->
             logger.entry(event)
 
             val guildMemberId = event.user.id.asString()
@@ -83,5 +92,4 @@ fun addDataCollectionListeners(client: DiscordClient) {
 
             logger.exit()
         }
-        .launchIn(GlobalScope)
 }
