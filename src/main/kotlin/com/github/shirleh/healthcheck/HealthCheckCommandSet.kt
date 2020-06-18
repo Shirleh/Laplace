@@ -1,4 +1,4 @@
-package com.github.shirleh.monitoring
+package com.github.shirleh.healthcheck
 
 import com.github.shirleh.command.Command
 import com.github.shirleh.command.CommandSet
@@ -6,7 +6,7 @@ import kotlinx.coroutines.reactive.awaitFirst
 import java.lang.management.ManagementFactory
 import java.time.Duration
 
-object MonitoringCommandSet : CommandSet {
+object HealthCheckCommandSet : CommandSet {
 
     override val commands: Map<String, Command> = mutableMapOf<String, Command>().apply {
         this["ping"] = Command(description = """Responds with "Pong!".""",

@@ -1,6 +1,6 @@
 package com.github.shirleh.command
 
-import com.github.shirleh.monitoring.MonitoringCommandSet
+import com.github.shirleh.healthcheck.HealthCheckCommandSet
 import discord4j.core.`object`.entity.Message
 import discord4j.core.event.domain.message.MessageCreateEvent
 import kotlinx.coroutines.flow.Flow
@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.filter
 object CommandHandler {
 
     private val commandRepository = CommandRegistry
-        .register(MonitoringCommandSet)
+        .register(HealthCheckCommandSet)
 
     /**
      * Listens to commands from the incoming [flow] of [MessageCreateEvent]s.
