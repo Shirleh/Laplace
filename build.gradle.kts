@@ -21,7 +21,7 @@ repositories {
 val kotlinVersion by extra("1.3.72")
 val kotlinCoroutinesVersion by extra("1.3.7")
 
-val discord4jVersion by extra("3.0.14")
+val discord4jVersion by extra("3.1.0.RC2")
 val influxDBVersion by extra("1.8.0")
 val kotlinLoggingVersion by extra("1.7.9")
 val logbackVersion by extra("1.2.3")
