@@ -12,13 +12,16 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactor.mono
 import kotlinx.coroutines.runBlocking
+import mu.KotlinLogging
 import reactor.core.publisher.Flux
 import kotlin.system.exitProcess
+
+private val logger = KotlinLogging.logger { }
 
 fun main(args: Array<String>) = runBlocking<Unit> {
     val token = getToken(args)
     if (token == null) {
-        System.err.println("Please provide a Discord token for the bot.")
+        logger.error { "Missing Discord bot token" }
         exitProcess(1)
     }
 
