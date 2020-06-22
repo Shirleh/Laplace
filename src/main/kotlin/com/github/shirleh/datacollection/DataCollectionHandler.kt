@@ -1,12 +1,19 @@
 package com.github.shirleh.datacollection
 
+import com.github.shirleh.orElseNull
 import com.influxdb.client.domain.WritePrecision
 import com.influxdb.client.write.Point
+import discord4j.core.`object`.audit.ActionType
+import discord4j.core.`object`.audit.AuditLogEntry
+import discord4j.core.`object`.audit.ChangeKey
 import discord4j.core.event.domain.guild.MemberJoinEvent
 import discord4j.core.event.domain.guild.MemberLeaveEvent
+import discord4j.core.event.domain.guild.MemberUpdateEvent
 import discord4j.core.event.domain.message.MessageCreateEvent
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.reactive.asFlow
+import kotlinx.coroutines.reactive.awaitSingle
 import mu.KotlinLogging
 import java.time.Duration
 import java.time.Instant
@@ -92,4 +99,55 @@ object DataCollectionHandler {
 
             logger.exit()
         }
+
+    /**
+     * Collects member nickname data from the incoming [events].
+     */
+    suspend fun collectNicknameData(events: Flow<MemberUpdateEvent>) {
+        logger.entry()
+
+        events
+            .onEach { delay(5000) }
+            .collect { event ->
+                val auditLog = findAuditLogByEvent(event) ?: return@collect
+                saveNicknameData(auditLog)
+            }
+
+        logger.exit()
+    }
+
+    private suspend fun findAuditLogByEvent(event: MemberUpdateEvent): AuditLogEntry? {
+        logger.entry(event)
+
+        val result = event.guild.awaitSingle()
+            .getAuditLog { spec -> spec.setActionType(ActionType.MEMBER_UPDATE) }
+            .asFlow()
+            .filter { auditLogEntry ->
+                auditLogEntry.getChange(ChangeKey.USER_NICK)
+                    .map { it.currentValue == event.currentNickname }
+                    .orElse(false)
+            }
+            .firstOrNull()
+
+        return result.also { logger.exit(it) }
+    }
+
+    private fun saveNicknameData(auditLog: AuditLogEntry) {
+        logger.entry(auditLog)
+
+        val author = auditLog.responsibleUserId.asString()
+
+        val change = auditLog.getChange(ChangeKey.USER_NICK).orElseNull() ?: return
+        val oldNick = change.oldValue.orElse("")
+        val currentNick = change.currentValue.orElse("")
+
+        Point.measurement("nicknames")
+            .addTag("author", author)
+            .addField("oldNick", oldNick)
+            .addField("currentNick", currentNick)
+            .time(Instant.now(), WritePrecision.S)
+            .let { dataPointRepository.save(it) }
+
+        logger.exit()
+    }
 }

@@ -6,6 +6,7 @@ import discord4j.core.DiscordClient
 import discord4j.core.event.domain.Event
 import discord4j.core.event.domain.guild.MemberJoinEvent
 import discord4j.core.event.domain.guild.MemberLeaveEvent
+import discord4j.core.event.domain.guild.MemberUpdateEvent
 import discord4j.core.event.domain.message.MessageCreateEvent
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
@@ -31,6 +32,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
             launch { client.on(MessageCreateEvent::class.java).addListener(DataCollectionHandler::collectMessageData) }
             launch { client.on(MemberJoinEvent::class.java).addListener(DataCollectionHandler::collectJoinData) }
             launch { client.on(MemberLeaveEvent::class.java).addListener(DataCollectionHandler::collectLeaveData) }
+            launch { client.on(MemberUpdateEvent::class.java).addListener(DataCollectionHandler::collectNicknameData) }
         }
     }.block()
 }
