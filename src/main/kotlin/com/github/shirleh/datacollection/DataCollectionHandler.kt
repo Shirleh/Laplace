@@ -28,7 +28,7 @@ object DataCollectionHandler {
     private val guildMemberQueryRepository = GuildMemberQueryRepositoryImpl()
 
     /**
-     * Collects message data from the incoming [flow] of [MessageCreateEvent]s.
+     * Collects message data from the incoming [events].
      */
     suspend fun collectMessageData(events: Flow<MessageCreateEvent>) = events.collect { saveMessageData(it) }
 
@@ -53,7 +53,7 @@ object DataCollectionHandler {
     }
 
     /**
-     * Collects member join data from the incoming [flow] of [MemberJoinEvent]s.
+     * Collects member join data from the incoming [events].
      */
     suspend fun collectJoinData(events: Flow<MemberJoinEvent>) = events.collect { saveJoinData(it) }
 
@@ -81,7 +81,7 @@ object DataCollectionHandler {
     }
 
     /**
-     * Collects member leave data from the incoming [flow] of [MemberLeaveEvent]s.
+     * Collects member leave data from the incoming [events].
      */
     suspend fun collectLeaveData(events: Flow<MemberLeaveEvent>) = events.collect { saveLeaveData(it) }
 
