@@ -6,8 +6,11 @@ import discord4j.core.event.domain.message.MessageCreateEvent
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filter
+import mu.KotlinLogging
 
 object CommandHandler {
+
+    private val logger = KotlinLogging.logger { }
 
     private val commandRepository = CommandRegistry
         .register(HealthCheckCommandSet)
@@ -18,15 +21,20 @@ object CommandHandler {
     suspend fun executeCommands(flow: Flow<MessageCreateEvent>) = flow
         .filter { it.message.isAuthorHuman() }
         .filter { it.message.containsPrefix("""<@!${it.client.selfId.asString()}>""") }
-        .collect { event ->
-            val parser = event.message.content.let { CommandParser(it) }
-            parser.next() // skips prefix
+        .collect { executeCommand(it) }
 
-            val commandName = parser.next() ?: return@collect
-            val command = commandRepository.findByName(commandName) ?: return@collect
+    private suspend fun executeCommand(event: MessageCreateEvent) {
+        logger.entry(event)
 
-            command.handler.invoke(parser, event)
-        }
+        val parser = event.message.content.let { CommandParser(it) }
+        parser.next() // skips prefix
+
+        val commandName = parser.next() ?: return
+        val command = commandRepository.findByName(commandName) ?: return
+        command.handler.invoke(parser, event)
+
+        logger.exit()
+    }
 
     private fun Message.isAuthorHuman(): Boolean = author.map { !it.isBot }.orElse(false)
 
