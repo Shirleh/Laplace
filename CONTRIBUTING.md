@@ -42,9 +42,17 @@ through the issue tracker.
 
 #### Setting up your local development environment
 
-- Please see the [installation section](README.md#installation) on how to install the project.
-- It's highly recommended to use [IntelliJ IDEA](https://www.jetbrains.com/idea/download/index.html#section=windows) 
-as your IDE for Kotlin projects.
+##### Additional prerequisites
+  
+- [JDK 11 or higher](https://www.oracle.com/java/technologies/javase-downloads.html)
+- [IntelliJ IDEA](https://www.jetbrains.com/idea/download/index.html#section=windows) (optional, but recommended)
+
+##### Setup
+
+- See the [getting started section](README.md#getting-started) on how to install the project.
+- Open the project in IntelliJ IDEA.
+- Create a *run configuration* by opening `Main.kt` and pressing `CTRL + SHIFT + F10`/`⌃⇧R`. This will also run Laplace for the first time.
+- :tada: ! You can now run/debug Laplace anywhere inside IntelliJ IDEA using `Shift + F10/F9`/`⌃R/D` (respectively) or the green buttons at the top!
 
 #### Submitting changes
 
