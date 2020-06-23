@@ -18,6 +18,14 @@ import mu.KotlinLogging
 import java.time.Duration
 import java.time.Instant
 
+/**
+ * Arbitrary delay to prevent audit log access before it's updated.
+ *
+ * In Discord, there's a delay between dispatching an event and updating the audit log with said event.
+ * Larger guilds tend to have longer delays. 5 seconds is commonly used which works *most of the time*.
+ */
+private const val AUDIT_LOG_UPDATE_DELAY = 5000L
+
 object DataCollectionHandler {
 
     private val logger = KotlinLogging.logger { }
@@ -26,95 +34,91 @@ object DataCollectionHandler {
     private val guildMemberQueryRepository = GuildMemberQueryRepositoryImpl()
 
     /**
-     * Collects message data from the incoming [flow] of [MessageCreateEvent]s.
+     * Collects message data from the incoming [events].
      */
-    suspend fun collectMessageData(flow: Flow<MessageCreateEvent>) = flow
-        .collect { event ->
-            logger.entry(event)
+    suspend fun collectMessageData(events: Flow<MessageCreateEvent>) = events.collect { saveMessageData(it) }
 
-            val message = event.message
+    private fun saveMessageData(event: MessageCreateEvent) {
+        logger.entry(event)
 
-            val channelId = message.channelId.asString()
-            val authorId = message.author.map { it.id.asString() }.orElse(null) ?: return@collect
-            val contentLength = message.content.let { if (it.isBlank()) return@collect else it.length }
-            val timestamp = message.timestamp
+        val message = event.message
 
-            Point.measurement("message")
-                .addTag("channel", channelId)
-                .addTag("author", authorId)
-                .addField("length", contentLength)
-                .time(timestamp, WritePrecision.S)
-                .let { dataPointRepository.save(it) }
+        val channelId = message.channelId.asString()
+        val authorId = message.author.map { it.id.asString() }.orElse(null) ?: return
+        val contentLength = message.content.let { if (it.isBlank()) return else it.length }
+        val timestamp = message.timestamp
 
-            logger.exit()
-        }
+        Point.measurement("message")
+            .addTag("channel", channelId)
+            .addTag("author", authorId)
+            .addField("length", contentLength)
+            .time(timestamp, WritePrecision.S)
+            .let { dataPointRepository.save(it) }
+
+        logger.exit()
+    }
 
     /**
-     * Collects member join data from the incoming [flow] of [MemberJoinEvent]s.
+     * Collects member join data from the incoming [events].
      */
-    suspend fun collectJoinData(flow: Flow<MemberJoinEvent>) = flow
-        .collect { event ->
-            logger.entry(event)
+    suspend fun collectJoinData(events: Flow<MemberJoinEvent>) = events.collect { saveJoinData(it) }
 
-            val member = event.member
+    private fun saveJoinData(event: MemberJoinEvent) {
+        logger.entry(event)
 
-            val guildId = event.guildId.asString()
-            val guildMemberId = member.id.asString()
-            val creationDate = member.id.timestamp.epochSecond
-            val isBot = member.isBot
-            val timestamp = member.joinTime
+        val member = event.member
 
-            Point.measurement("guildMember")
-                .addTag("event", "join")
-                .addTag("guildId", guildId)
-                .addTag("guildMemberId", guildMemberId)
-                .addField("creationDate", creationDate)
-                .addField("isBot", isBot)
-                .time(timestamp, WritePrecision.S)
-                .let { dataPointRepository.save(it) }
+        val guildId = event.guildId.asString()
+        val guildMemberId = member.id.asString()
+        val creationDate = member.id.timestamp.epochSecond
+        val isBot = member.isBot
+        val timestamp = member.joinTime
 
-            logger.exit()
-        }
+        Point.measurement("guildMembership")
+            .addTag("event", "join")
+            .addTag("guildId", guildId)
+            .addTag("guildMemberId", guildMemberId)
+            .addField("creationDate", creationDate)
+            .addField("isBot", isBot)
+            .time(timestamp, WritePrecision.S)
+            .let { dataPointRepository.save(it) }
+
+        logger.exit()
+    }
 
     /**
-     * Collects member leave data from the incoming [flow] of [MemberLeaveEvent]s.
+     * Collects member leave data from the incoming [events].
      */
-    suspend fun collectLeaveData(flow: Flow<MemberLeaveEvent>) = flow
-        .collect { event ->
-            logger.entry(event)
+    suspend fun collectLeaveData(events: Flow<MemberLeaveEvent>) = events.collect { saveLeaveData(it) }
 
-            val guildMemberId = event.user.id.asString()
-            val guildId = event.guildId.asString()
-            val joinTime = guildMemberQueryRepository.findLatestJoinDate(guildMemberId, guildId)
-            val leaveTime = Instant.now()
-            val membershipDuration = Duration.between(joinTime, leaveTime)
+    private suspend fun saveLeaveData(event: MemberLeaveEvent) {
+        logger.entry(event)
 
-            Point.measurement("guildMember")
-                .addTag("event", "leave")
-                .addTag("guildId", guildId)
-                .addTag("guildMemberId", guildMemberId)
-                .addField("membershipDuration", membershipDuration.seconds)
-                .time(leaveTime, WritePrecision.S)
-                .let { dataPointRepository.save(it) }
+        val guildMemberId = event.user.id.asString()
+        val guildId = event.guildId.asString()
+        val joinTime = guildMemberQueryRepository.findLatestJoinDate(guildMemberId, guildId)
+        val leaveTime = Instant.now()
+        val membershipDuration = Duration.between(joinTime, leaveTime)
 
-            logger.exit()
-        }
+        Point.measurement("guildMembership")
+            .addTag("event", "leave")
+            .addTag("guildId", guildId)
+            .addTag("guildMemberId", guildMemberId)
+            .addField("membershipDuration", membershipDuration.seconds)
+            .time(leaveTime, WritePrecision.S)
+            .let { dataPointRepository.save(it) }
+
+        logger.exit()
+    }
 
     /**
      * Collects member nickname data from the incoming [events].
      */
-    suspend fun collectNicknameData(events: Flow<MemberUpdateEvent>) {
-        logger.entry()
-
+    suspend fun collectNicknameData(events: Flow<MemberUpdateEvent>) =
         events
-            .onEach { delay(5000) }
-            .collect { event ->
-                val auditLog = findAuditLogByEvent(event) ?: return@collect
-                saveNicknameData(auditLog)
-            }
-
-        logger.exit()
-    }
+            .onEach { delay(AUDIT_LOG_UPDATE_DELAY) }
+            .mapNotNull { findAuditLogByEvent(it) }
+            .collect { saveNicknameData(it) }
 
     private suspend fun findAuditLogByEvent(event: MemberUpdateEvent): AuditLogEntry? {
         logger.entry(event)
