@@ -12,16 +12,19 @@ services:
     depends_on:
       - influxdb
     build: .
-    command: {discord_token}
     environment:
+      DISCORD_TOKEN_FILE: /run/secrets/discord_token
       INFLUX_URL: influxdb:9999
       INFLUX_ORG: tph
       INFLUX_BUCKET: laplace
       INFLUX_TOKEN_FILE: /run/secrets/influx_token
     secrets:
+      - discord_token
       - influx_token
 
 secrets:
+  discord_token:
+    file: discord_token.txt
   influx_token:
     file: influx_token.txt
 

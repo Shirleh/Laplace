@@ -15,12 +15,14 @@ import kotlinx.coroutines.reactor.mono
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import reactor.core.publisher.Flux
+import java.nio.file.Path
+import java.util.*
 import kotlin.system.exitProcess
 
 private val logger = KotlinLogging.logger { }
 
-fun main(args: Array<String>) = runBlocking<Unit> {
-    val token = getToken(args)
+fun main() = runBlocking<Unit> {
+    val token = getToken()
     if (token == null) {
         logger.error { "Missing Discord bot token" }
         exitProcess(1)
@@ -37,8 +39,14 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     }.block()
 }
 
-private fun getToken(args: Array<String>): String? =
-    if (args.isNotEmpty()) args[0]
-    else System.getenv("DISCORD_TOKEN")
+private fun getToken(): String? {
+    logger.entry()
+
+    val filePath = Path.of(System.getenv("DISCORD_TOKEN_FILE") ?: "discord_token.txt")
+    val scanner = Scanner(filePath)
+    val result = if (scanner.hasNext()) scanner.next() else null
+
+    return result.also { logger.exit(it) }
+}
 
 private suspend fun <E : Event> Flux<E>.addListener(listener: suspend (Flow<E>) -> Unit) = listener.invoke(asFlow())
