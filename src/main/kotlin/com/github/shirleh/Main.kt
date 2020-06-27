@@ -4,6 +4,7 @@ import com.github.shirleh.command.CommandHandler
 import com.github.shirleh.datacollection.DataCollectionHandler
 import discord4j.core.DiscordClient
 import discord4j.core.event.domain.Event
+import discord4j.core.event.domain.VoiceStateUpdateEvent
 import discord4j.core.event.domain.guild.MemberJoinEvent
 import discord4j.core.event.domain.guild.MemberLeaveEvent
 import discord4j.core.event.domain.guild.MemberUpdateEvent
@@ -35,6 +36,7 @@ fun main() = runBlocking<Unit> {
             launch { client.on(MemberJoinEvent::class.java).addListener(DataCollectionHandler::collectJoinData) }
             launch { client.on(MemberLeaveEvent::class.java).addListener(DataCollectionHandler::collectLeaveData) }
             launch { client.on(MemberUpdateEvent::class.java).addListener(DataCollectionHandler::collectNicknameData) }
+            launch { client.on(VoiceStateUpdateEvent::class.java).addListener(DataCollectionHandler::collectVoiceData) }
         }
     }.block()
 }
