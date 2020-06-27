@@ -137,6 +137,25 @@ object DataCollectionHandler {
         return result.also { logger.exit(it) }
     }
 
+    private fun saveNicknameData(auditLog: AuditLogEntry) {
+        logger.entry(auditLog)
+
+        val author = auditLog.responsibleUserId.asString()
+
+        val change = auditLog.getChange(ChangeKey.USER_NICK).orElseNull() ?: return
+        val oldNick = change.oldValue.orElse("")
+        val currentNick = change.currentValue.orElse("")
+
+        Point.measurement("nicknames")
+            .addTag("author", author)
+            .addField("oldNick", oldNick)
+            .addField("currentNick", currentNick)
+            .time(Instant.now(), WritePrecision.S)
+            .let { dataPointRepository.save(it) }
+
+        logger.exit()
+    }
+
     /**
      * Collects voice data from the incoming [events].
      */
@@ -167,25 +186,6 @@ object DataCollectionHandler {
             .addField("isMuted", isMuted)
             .addField("isDeafened", isDeafened)
             .addField("isInVoice", isInVoice)
-            .time(Instant.now(), WritePrecision.S)
-            .let { dataPointRepository.save(it) }
-
-        logger.exit()
-    }
-
-    private fun saveNicknameData(auditLog: AuditLogEntry) {
-        logger.entry(auditLog)
-
-        val author = auditLog.responsibleUserId.asString()
-
-        val change = auditLog.getChange(ChangeKey.USER_NICK).orElseNull() ?: return
-        val oldNick = change.oldValue.orElse("")
-        val currentNick = change.currentValue.orElse("")
-
-        Point.measurement("nicknames")
-            .addTag("author", author)
-            .addField("oldNick", oldNick)
-            .addField("currentNick", currentNick)
             .time(Instant.now(), WritePrecision.S)
             .let { dataPointRepository.save(it) }
 
