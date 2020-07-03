@@ -169,11 +169,13 @@ object DataCollectionHandler {
         val guildId = voiceState.guildId.asString()
         val guildMemberId = voiceState.userId.asString()
 
-        val channelId = if (voiceState.channelId.isPresent) {
-            voiceState.channelId.get().asString()
-        } else {
-            event.old.get().channelId.get().asString()
-        }
+        val channelId = voiceState.channelId
+            .map { it.asString() }
+            .orElse(
+                event.old
+                    .flatMap { old -> old.channelId.map { it.asString() } }
+                    .orElse("")
+            )
 
         val isMuted = voiceState.isMuted || voiceState.isSelfMuted
         val isDeafened = voiceState.isDeaf || voiceState.isSelfDeaf
