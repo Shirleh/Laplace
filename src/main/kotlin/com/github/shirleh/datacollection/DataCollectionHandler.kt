@@ -171,11 +171,11 @@ object DataCollectionHandler {
 
         val channelId = voiceState.channelId
             .map { it.asString() }
-            .orElse(
+            .orElseGet {
                 event.old
                     .flatMap { old -> old.channelId.map { it.asString() } }
                     .orElse("")
-            )
+            }
 
         val isMuted = voiceState.isMuted || voiceState.isSelfMuted
         val isDeafened = voiceState.isDeaf || voiceState.isSelfDeaf
