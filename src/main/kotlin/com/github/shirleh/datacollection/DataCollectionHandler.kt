@@ -6,6 +6,7 @@ import com.influxdb.client.write.Point
 import discord4j.core.`object`.audit.ActionType
 import discord4j.core.`object`.audit.AuditLogEntry
 import discord4j.core.`object`.audit.ChangeKey
+import discord4j.core.event.domain.VoiceStateUpdateEvent
 import discord4j.core.event.domain.guild.MemberJoinEvent
 import discord4j.core.event.domain.guild.MemberLeaveEvent
 import discord4j.core.event.domain.guild.MemberUpdateEvent
@@ -149,6 +150,44 @@ object DataCollectionHandler {
             .addTag("author", author)
             .addField("oldNick", oldNick)
             .addField("currentNick", currentNick)
+            .time(Instant.now(), WritePrecision.S)
+            .let { dataPointRepository.save(it) }
+
+        logger.exit()
+    }
+
+    /**
+     * Collects voice data from the incoming [events].
+     */
+    suspend fun collectVoiceData(events: Flow<VoiceStateUpdateEvent>) = events.collect { saveVoiceData(it) }
+
+    private fun saveVoiceData(event: VoiceStateUpdateEvent) {
+        logger.entry(event)
+
+        val voiceState = event.current
+
+        val guildId = voiceState.guildId.asString()
+        val guildMemberId = voiceState.userId.asString()
+
+        val channelId = voiceState.channelId
+            .map { it.asString() }
+            .orElseGet {
+                event.old
+                    .flatMap { old -> old.channelId.map { it.asString() } }
+                    .orElse("")
+            }
+
+        val isMuted = voiceState.isMuted || voiceState.isSelfMuted
+        val isDeafened = voiceState.isDeaf || voiceState.isSelfDeaf
+        val isInVoice = voiceState.channelId.isPresent
+
+        Point.measurement("voiceState")
+            .addTag("guildId", guildId)
+            .addTag("channelId", channelId)
+            .addTag("guildMemberId", guildMemberId)
+            .addField("isMuted", isMuted)
+            .addField("isDeafened", isDeafened)
+            .addField("isInVoice", isInVoice)
             .time(Instant.now(), WritePrecision.S)
             .let { dataPointRepository.save(it) }
 
