@@ -3,10 +3,12 @@ package com.github.shirleh.datacollection
 import com.github.shirleh.orElseNull
 import com.influxdb.client.domain.WritePrecision
 import com.influxdb.client.write.Point
+import discord4j.common.util.Snowflake
 import discord4j.core.`object`.audit.ActionType
 import discord4j.core.`object`.audit.AuditLogEntry
 import discord4j.core.`object`.audit.ChangeKey
 import discord4j.core.event.domain.VoiceStateUpdateEvent
+import discord4j.core.event.domain.guild.BanEvent
 import discord4j.core.event.domain.guild.MemberJoinEvent
 import discord4j.core.event.domain.guild.MemberLeaveEvent
 import discord4j.core.event.domain.guild.MemberUpdateEvent
@@ -108,6 +110,40 @@ object DataCollectionHandler {
             .addField("membershipDuration", membershipDuration.seconds)
             .time(leaveTime, WritePrecision.S)
             .let { dataPointRepository.save(it) }
+
+        logger.exit()
+    }
+
+    /**
+     * Collects ban data from the incoming [events].
+     */
+    suspend fun collectBanData(events: Flow<BanEvent>) =
+        events
+            .onEach { delay(AUDIT_LOG_UPDATE_DELAY) }
+            .mapNotNull(::findBanAuthorId)
+            .collect(::saveBanData)
+
+    private suspend fun findBanAuthorId(event: BanEvent): Snowflake? {
+        logger.entry(event)
+
+        val result = event.guild.awaitSingle()
+            .getAuditLog { spec -> spec.setActionType(ActionType.MEMBER_BAN_ADD) }
+            .asFlow()
+            .filter { auditLogEntry -> auditLogEntry.targetId.orElse(null) == event.user.id }
+            .map { auditLogEntry -> auditLogEntry.responsibleUserId }
+            .firstOrNull()
+
+        return result.also { logger.exit(it) }
+    }
+
+    private suspend fun saveBanData(banAuthorId: Snowflake) {
+        logger.entry(banAuthorId)
+
+        Point.measurement("bans")
+            .addTag("author", banAuthorId.asString())
+            .addField("count", 1)
+            .time(Instant.now(), WritePrecision.S)
+            .run(dataPointRepository::save)
 
         logger.exit()
     }
