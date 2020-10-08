@@ -34,7 +34,6 @@ object DataCollectionHandler {
     private val logger = KotlinLogging.logger { }
 
     private val dataPointRepository = DataPointRepositoryImpl()
-    private val guildMemberQueryRepository = GuildMemberQueryRepositoryImpl()
 
     /**
      * Collects message data from the incoming [events].
@@ -99,7 +98,8 @@ object DataCollectionHandler {
 
         val guildMemberId = event.user.id.asString()
         val guildId = event.guildId.asString()
-        val joinTime = guildMemberQueryRepository.findLatestJoinDate(guildMemberId, guildId)
+        val joinTime = event.member.map { it.joinTime }
+            .orElseThrow { IllegalStateException("Member not present in MemberLeaveEvent?") }
         val leaveTime = Instant.now()
         val membershipDuration = Duration.between(joinTime, leaveTime)
 
