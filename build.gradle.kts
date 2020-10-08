@@ -4,6 +4,7 @@ plugins {
     application
     id("com.github.johnrengelman.shadow") version "5.2.0"
     kotlin("jvm") version "1.3.72"
+    kotlin("kapt") version "1.4.10"
 }
 
 group = "org.github.shirleh"
@@ -21,8 +22,12 @@ repositories {
 val kotlinVersion by extra("1.3.72")
 val kotlinCoroutinesVersion by extra("1.3.7")
 
+val arrowVersion by extra("0.11.0")
+
 val discord4jVersion by extra("3.1.0.RC2")
+val cliktVersion by extra("3.0.1")
 val influxDBVersion by extra("1.8.0")
+
 val kotlinLoggingVersion by extra("1.7.9")
 val logbackVersion by extra("1.2.3")
 val spekVersion by extra("2.0.10")
@@ -32,8 +37,12 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinCoroutinesVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:$kotlinCoroutinesVersion")
 
-    implementation("com.discord4j:discord4j-core:$discord4jVersion")
+    implementation("io.arrow-kt:arrow-core:$arrowVersion")
+    implementation("io.arrow-kt:arrow-syntax:$arrowVersion")
+    kapt("io.arrow-kt:arrow-meta:$arrowVersion")
 
+    implementation("com.discord4j:discord4j-core:$discord4jVersion")
+    implementation("com.github.ajalt.clikt:clikt:${cliktVersion}")
     implementation("com.influxdb:influxdb-client-java:$influxDBVersion")
     implementation("com.influxdb:influxdb-client-kotlin:$influxDBVersion")
     implementation("com.influxdb:flux-dsl:$influxDBVersion")

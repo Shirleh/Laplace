@@ -1,42 +1,40 @@
 package com.github.shirleh.command
 
-import com.github.shirleh.healthcheck.HealthCheckCommandSet
+import arrow.core.Either
+import com.github.shirleh.command.cli.CliMessage
+import com.github.shirleh.command.cli.laplaceCli
 import discord4j.core.`object`.entity.Message
 import discord4j.core.event.domain.message.MessageCreateEvent
+import discord4j.core.spec.EmbedCreateSpec
+import discord4j.rest.util.Color
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filter
-import mu.KotlinLogging
+import kotlinx.coroutines.reactive.awaitFirst
 
 object CommandHandler {
 
-    private val logger = KotlinLogging.logger { }
-
-    private val commandRepository = CommandRegistry
-        .register(HealthCheckCommandSet)
-
     /**
-     * Listens to commands from the incoming [flow] of [MessageCreateEvent]s.
+     * Listens to incoming [MessageCreateEvent]s and execute the containing command.
      */
     suspend fun executeCommands(flow: Flow<MessageCreateEvent>) = flow
-        .filter { it.message.isAuthorHuman() }
+        .filter { it.message.hasHumanAuthor() }
         .filter { it.message.containsPrefix("""<@!${it.client.selfId.asString()}>""") }
-        .collect { executeCommand(it) }
+        .collect {
+            when (val parseResult = laplaceCli().parse(it.message.content)) {
+                is Either.Left -> {
+                    val channel = it.message.channel.awaitFirst()
+                    channel.createEmbed { spec -> messageSpec(spec, parseResult.a) }.awaitFirst()
+                }
+                is Either.Right -> parseResult.b.execute(it)
+            }
+        }
 
-    private suspend fun executeCommand(event: MessageCreateEvent) {
-        logger.entry(event)
+    private fun Message.hasHumanAuthor(): Boolean = author.map { !it.isBot }.orElse(false)
 
-        val parser = event.message.content.let { CommandParser(it) }
-        parser.next() // skips prefix
+    private fun Message.containsPrefix(prefix: String) = content.startsWith(prefix)
 
-        val commandName = parser.next() ?: return
-        val command = commandRepository.findByName(commandName) ?: return
-        command.handler.invoke(parser, event)
-
-        logger.exit()
-    }
-
-    private fun Message.isAuthorHuman(): Boolean = author.map { !it.isBot }.orElse(false)
-
-    private fun Message.containsPrefix(prefix: String) = content.substringBefore(' ') == prefix
+    private fun messageSpec(spec: EmbedCreateSpec, e: CliMessage) = spec
+        .setColor(if (e.error) Color.RED else Color.WHITE)
+        .setDescription(e.message)
 }
