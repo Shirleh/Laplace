@@ -36,34 +36,6 @@ object DataCollectionHandler {
     private val dataPointRepository = DataPointRepositoryImpl()
 
     /**
-     * Collects member join data from the incoming [events].
-     */
-    suspend fun collectJoinData(events: Flow<MemberJoinEvent>) = events.collect { saveJoinData(it) }
-
-    private fun saveJoinData(event: MemberJoinEvent) {
-        logger.entry(event)
-
-        val member = event.member
-
-        val guildId = event.guildId.asString()
-        val guildMemberId = member.id.asString()
-        val creationDate = member.id.timestamp.epochSecond
-        val isBot = member.isBot
-        val timestamp = member.joinTime
-
-        Point.measurement("guildMembership")
-            .addTag("event", "join")
-            .addTag("guildId", guildId)
-            .addTag("guildMemberId", guildMemberId)
-            .addField("creationDate", creationDate)
-            .addField("isBot", isBot)
-            .time(timestamp, WritePrecision.S)
-            .let { dataPointRepository.save(it) }
-
-        logger.exit()
-    }
-
-    /**
      * Collects member leave data from the incoming [events].
      */
     suspend fun collectLeaveData(events: Flow<MemberLeaveEvent>) = events.collect { saveLeaveData(it) }
