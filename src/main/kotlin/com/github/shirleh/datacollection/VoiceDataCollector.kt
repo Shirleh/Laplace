@@ -2,33 +2,40 @@ package com.github.shirleh.datacollection
 
 import com.influxdb.client.domain.WritePrecision
 import com.influxdb.client.write.Point
+import discord4j.common.util.Snowflake
 import discord4j.core.event.domain.VoiceStateUpdateEvent
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.map
 import mu.KotlinLogging
+import org.koin.core.KoinComponent
+import org.koin.core.inject
 import java.time.Instant
 
-object DataCollectionHandler {
+object VoiceDataCollector : KoinComponent {
 
     private val logger = KotlinLogging.logger { }
 
-    private val dataPointRepository = DataPointRepositoryImpl()
+    private val dataPointRepository: DataPointRepository by inject()
 
     /**
      * Collects voice data from the incoming [events].
      */
-    suspend fun collectVoiceData(events: Flow<VoiceStateUpdateEvent>) = events.collect { saveVoiceData(it) }
+    suspend fun collect(events: Flow<VoiceStateUpdateEvent>) {
+        events
+            .map(::toDataPoint)
+            .collect(dataPointRepository::save)
+    }
 
-    private fun saveVoiceData(event: VoiceStateUpdateEvent) {
+    private fun toDataPoint(event: VoiceStateUpdateEvent): Point {
         logger.entry(event)
 
         val voiceState = event.current
 
         val guildId = voiceState.guildId.asString()
         val guildMemberId = voiceState.userId.asString()
-
         val channelId = voiceState.channelId
-            .map { it.asString() }
+            .map(Snowflake::asString)
             .orElseGet {
                 event.old
                     .flatMap { old -> old.channelId.map { it.asString() } }
@@ -39,7 +46,7 @@ object DataCollectionHandler {
         val isDeafened = voiceState.isDeaf || voiceState.isSelfDeaf
         val isInVoice = voiceState.channelId.isPresent
 
-        Point.measurement("voiceState")
+        val result = Point.measurement("voiceState")
             .addTag("guildId", guildId)
             .addTag("channelId", channelId)
             .addTag("guildMemberId", guildMemberId)
@@ -47,8 +54,7 @@ object DataCollectionHandler {
             .addField("isDeafened", isDeafened)
             .addField("isInVoice", isInVoice)
             .time(Instant.now(), WritePrecision.S)
-            .let { dataPointRepository.save(it) }
 
-        logger.exit()
+        return logger.exit(result)
     }
 }
