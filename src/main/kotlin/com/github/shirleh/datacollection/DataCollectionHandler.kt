@@ -21,53 +21,11 @@ import mu.KotlinLogging
 import java.time.Duration
 import java.time.Instant
 
-/**
- * Arbitrary delay to prevent audit log access before it's updated.
- *
- * In Discord, there's a delay between dispatching an event and updating the audit log with said event.
- * Larger guilds tend to have longer delays. 5 seconds is commonly used which works *most of the time*.
- */
-private const val AUDIT_LOG_UPDATE_DELAY = 5000L
-
 object DataCollectionHandler {
 
     private val logger = KotlinLogging.logger { }
 
     private val dataPointRepository = DataPointRepositoryImpl()
-
-    /**
-     * Collects ban data from the incoming [events].
-     */
-    suspend fun collectBanData(events: Flow<BanEvent>) =
-        events
-            .onEach { delay(AUDIT_LOG_UPDATE_DELAY) }
-            .mapNotNull(::findBanAuthorId)
-            .collect(::saveBanData)
-
-    private suspend fun findBanAuthorId(event: BanEvent): Snowflake? {
-        logger.entry(event)
-
-        val result = event.guild.awaitSingle()
-            .getAuditLog { spec -> spec.setActionType(ActionType.MEMBER_BAN_ADD) }
-            .asFlow()
-            .filter { auditLogEntry -> auditLogEntry.targetId.orElse(null) == event.user.id }
-            .map { auditLogEntry -> auditLogEntry.responsibleUserId }
-            .firstOrNull()
-
-        return result.also { logger.exit(it) }
-    }
-
-    private suspend fun saveBanData(banAuthorId: Snowflake) {
-        logger.entry(banAuthorId)
-
-        Point.measurement("bans")
-            .addTag("author", banAuthorId.asString())
-            .addField("count", 1)
-            .time(Instant.now(), WritePrecision.S)
-            .run(dataPointRepository::save)
-
-        logger.exit()
-    }
 
     /**
      * Collects member nickname data from the incoming [events].
