@@ -6,6 +6,7 @@ import com.influxdb.client.write.Point
 import discord4j.core.event.domain.message.MessageCreateEvent
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.mapNotNull
 import mu.KotlinLogging
 import org.koin.core.KoinComponent
@@ -22,6 +23,7 @@ object MessageDataCollector : KoinComponent {
      */
     suspend fun collect(events: Flow<MessageCreateEvent>) {
         events
+            .filter { event -> event.message.author.map { !it.isBot }.orElse(false) }
             .mapNotNull(::toDataPoint)
             .collect(dataPointRepository::save)
     }
