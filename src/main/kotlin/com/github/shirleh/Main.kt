@@ -43,7 +43,7 @@ fun main() = runBlocking<Unit> {
             launch { client.on(MemberJoinEvent::class.java).addListener(MemberJoinDataCollector::collect) }
             launch { client.on(MemberLeaveEvent::class.java).addListener(MemberLeaveDataCollector::collect) }
             launch { client.on(BanEvent::class.java).addListener(BanDataCollector::collect) }
-            launch { client.on(MemberUpdateEvent::class.java).addListener(DataCollectionHandler::collectNicknameData) }
+            launch { client.on(MemberUpdateEvent::class.java).addListener(NicknameDataCollector::collect) }
             launch { client.on(VoiceStateUpdateEvent::class.java).addListener(DataCollectionHandler::collectVoiceData) }
         }
     }.block()
