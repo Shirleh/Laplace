@@ -2,6 +2,8 @@ package com.github.shirleh
 
 import com.github.shirleh.command.CommandHandler
 import com.github.shirleh.datacollection.DataCollectionHandler
+import com.github.shirleh.datacollection.MessageDataCollector
+import com.github.shirleh.datacollection.dataCollectionModule
 import discord4j.core.DiscordClient
 import discord4j.core.event.domain.Event
 import discord4j.core.event.domain.guild.BanEvent
@@ -16,6 +18,7 @@ import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactor.mono
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
+import org.koin.core.context.startKoin
 import reactor.core.publisher.Flux
 import java.nio.file.Path
 import java.util.*
@@ -30,11 +33,15 @@ fun main() = runBlocking<Unit> {
         exitProcess(1)
     }
 
+    startKoin {
+        modules(dataCollectionModule)
+    }
+
     DiscordClient.create(token).withGateway { client ->
         mono {
             launch { client.on(MessageCreateEvent::class.java).addListener(CommandHandler::executeCommands) }
 
-            launch { client.on(MessageCreateEvent::class.java).addListener(DataCollectionHandler::collectMessageData) }
+            launch { client.on(MessageCreateEvent::class.java).addListener(MessageDataCollector::collect) }
             launch { client.on(MemberJoinEvent::class.java).addListener(DataCollectionHandler::collectJoinData) }
             launch { client.on(MemberLeaveEvent::class.java).addListener(DataCollectionHandler::collectLeaveData) }
             launch { client.on(BanEvent::class.java).addListener(DataCollectionHandler::collectBanData) }

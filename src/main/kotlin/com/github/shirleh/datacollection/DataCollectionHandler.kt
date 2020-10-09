@@ -36,31 +36,6 @@ object DataCollectionHandler {
     private val dataPointRepository = DataPointRepositoryImpl()
 
     /**
-     * Collects message data from the incoming [events].
-     */
-    suspend fun collectMessageData(events: Flow<MessageCreateEvent>) = events.collect { saveMessageData(it) }
-
-    private fun saveMessageData(event: MessageCreateEvent) {
-        logger.entry(event)
-
-        val message = event.message
-
-        val channelId = message.channelId.asString()
-        val authorId = message.author.map { it.id.asString() }.orElse(null) ?: return
-        val contentLength = message.content.let { if (it.isBlank()) return else it.length }
-        val timestamp = message.timestamp
-
-        Point.measurement("message")
-            .addTag("channel", channelId)
-            .addTag("author", authorId)
-            .addField("length", contentLength)
-            .time(timestamp, WritePrecision.S)
-            .let { dataPointRepository.save(it) }
-
-        logger.exit()
-    }
-
-    /**
      * Collects member join data from the incoming [events].
      */
     suspend fun collectJoinData(events: Flow<MemberJoinEvent>) = events.collect { saveJoinData(it) }
