@@ -23,6 +23,7 @@ val kotlinVersion by extra("1.3.72")
 val kotlinCoroutinesVersion by extra("1.3.7")
 
 val arrowVersion by extra("0.11.0")
+val koinVersion by extra("2.1.6")
 
 val discord4jVersion by extra("3.1.0.RC2")
 val cliktVersion by extra("3.0.1")
@@ -40,6 +41,7 @@ dependencies {
     implementation("io.arrow-kt:arrow-core:$arrowVersion")
     implementation("io.arrow-kt:arrow-syntax:$arrowVersion")
     kapt("io.arrow-kt:arrow-meta:$arrowVersion")
+    implementation("org.koin:koin-core:$koinVersion")
 
     implementation("com.discord4j:discord4j-core:$discord4jVersion")
     implementation("com.github.ajalt.clikt:clikt:${cliktVersion}")
