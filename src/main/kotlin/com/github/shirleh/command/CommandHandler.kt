@@ -3,6 +3,7 @@ package com.github.shirleh.command
 import arrow.core.Either
 import com.github.shirleh.command.cli.CliMessage
 import com.github.shirleh.command.cli.laplaceCli
+import com.github.shirleh.extensions.await
 import discord4j.core.`object`.entity.Message
 import discord4j.core.event.domain.message.MessageCreateEvent
 import discord4j.core.spec.EmbedCreateSpec
@@ -10,7 +11,6 @@ import discord4j.rest.util.Color
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.reactive.awaitFirst
 
 object CommandHandler {
 
@@ -23,8 +23,8 @@ object CommandHandler {
         .collect {
             when (val parseResult = laplaceCli().parse(it.message.content)) {
                 is Either.Left -> {
-                    val channel = it.message.channel.awaitFirst()
-                    channel.createEmbed { spec -> messageSpec(spec, parseResult.a) }.awaitFirst()
+                    val channel = it.message.channel.await()
+                    channel.createEmbed { spec -> messageSpec(spec, parseResult.a) }.await()
                 }
                 is Either.Right -> parseResult.b.execute(it)
             }
