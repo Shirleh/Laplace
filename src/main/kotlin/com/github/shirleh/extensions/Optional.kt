@@ -1,4 +1,4 @@
-package com.github.shirleh
+package com.github.shirleh.extensions
 
 import java.util.*
 
