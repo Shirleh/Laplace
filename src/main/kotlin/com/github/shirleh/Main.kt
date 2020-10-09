@@ -2,6 +2,7 @@ package com.github.shirleh
 
 import com.github.shirleh.command.CommandHandler
 import com.github.shirleh.datacollection.DataCollectionHandler
+import com.github.shirleh.datacollection.MemberJoinDataCollector
 import com.github.shirleh.datacollection.MessageDataCollector
 import com.github.shirleh.datacollection.dataCollectionModule
 import discord4j.core.DiscordClient
@@ -42,7 +43,7 @@ fun main() = runBlocking<Unit> {
             launch { client.on(MessageCreateEvent::class.java).addListener(CommandHandler::executeCommands) }
 
             launch { client.on(MessageCreateEvent::class.java).addListener(MessageDataCollector::collect) }
-            launch { client.on(MemberJoinEvent::class.java).addListener(DataCollectionHandler::collectJoinData) }
+            launch { client.on(MemberJoinEvent::class.java).addListener(MemberJoinDataCollector::collect) }
             launch { client.on(MemberLeaveEvent::class.java).addListener(DataCollectionHandler::collectLeaveData) }
             launch { client.on(BanEvent::class.java).addListener(DataCollectionHandler::collectBanData) }
             launch { client.on(MemberUpdateEvent::class.java).addListener(DataCollectionHandler::collectNicknameData) }
