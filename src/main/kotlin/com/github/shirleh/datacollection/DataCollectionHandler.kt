@@ -36,32 +36,6 @@ object DataCollectionHandler {
     private val dataPointRepository = DataPointRepositoryImpl()
 
     /**
-     * Collects member leave data from the incoming [events].
-     */
-    suspend fun collectLeaveData(events: Flow<MemberLeaveEvent>) = events.collect { saveLeaveData(it) }
-
-    private suspend fun saveLeaveData(event: MemberLeaveEvent) {
-        logger.entry(event)
-
-        val guildMemberId = event.user.id.asString()
-        val guildId = event.guildId.asString()
-        val joinTime = event.member.map { it.joinTime }
-            .orElseThrow { IllegalStateException("Member not present in MemberLeaveEvent?") }
-        val leaveTime = Instant.now()
-        val membershipDuration = Duration.between(joinTime, leaveTime)
-
-        Point.measurement("guildMembership")
-            .addTag("event", "leave")
-            .addTag("guildId", guildId)
-            .addTag("guildMemberId", guildMemberId)
-            .addField("membershipDuration", membershipDuration.seconds)
-            .time(leaveTime, WritePrecision.S)
-            .let { dataPointRepository.save(it) }
-
-        logger.exit()
-    }
-
-    /**
      * Collects ban data from the incoming [events].
      */
     suspend fun collectBanData(events: Flow<BanEvent>) =
