@@ -27,6 +27,7 @@ val koinVersion by extra("2.1.6")
 
 val discord4jVersion by extra("3.1.0.RC2")
 val cliktVersion by extra("3.0.1")
+val emojiJavaVersion by extra("5.1.1")
 val influxDBVersion by extra("1.8.0")
 
 val kotlinLoggingVersion by extra("1.7.9")
@@ -45,6 +46,7 @@ dependencies {
 
     implementation("com.discord4j:discord4j-core:$discord4jVersion")
     implementation("com.github.ajalt.clikt:clikt:${cliktVersion}")
+    implementation("com.vdurmont:emoji-java:${emojiJavaVersion}")
     implementation("com.influxdb:influxdb-client-java:$influxDBVersion")
     implementation("com.influxdb:influxdb-client-kotlin:$influxDBVersion")
     implementation("com.influxdb:flux-dsl:$influxDBVersion")
@@ -61,7 +63,10 @@ dependencies {
 tasks {
     withType<KotlinCompile> {
         kotlinOptions.jvmTarget = "1.8"
-        kotlinOptions.freeCompilerArgs = listOf("-Xopt-in=kotlinx.coroutines.ExperimentalCoroutinesApi")
+        kotlinOptions.freeCompilerArgs = listOf(
+            "-Xopt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
+            "-Xopt-in=kotlin.RequiresOptIn"
+        )
     }
     withType<Test> {
         useJUnitPlatform {
