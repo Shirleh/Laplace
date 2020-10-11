@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package com.github.shirleh.extensions
 
 import kotlinx.coroutines.CoroutineScope
