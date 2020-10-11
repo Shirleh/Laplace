@@ -11,6 +11,8 @@ import discord4j.core.event.domain.guild.MemberJoinEvent
 import discord4j.core.event.domain.guild.MemberLeaveEvent
 import discord4j.core.event.domain.guild.MemberUpdateEvent
 import discord4j.core.event.domain.message.MessageCreateEvent
+import discord4j.core.event.domain.message.ReactionAddEvent
+import discord4j.core.event.domain.message.ReactionRemoveEvent
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
@@ -41,12 +43,16 @@ fun main() = runBlocking<Unit> {
             launch { client.on(MessageCreateEvent::class.java).addListener(CommandHandler::executeCommands) }
 
             launch { client.on(MessageCreateEvent::class.java).addListener(MessageDataCollector::collect) }
+
+            launch { client.on(MessageCreateEvent::class.java).addListener(EmojiDataCollector::collectFromMessages) }
+            launch { client.on(ReactionAddEvent::class.java).addListener(EmojiDataCollector::collectFromReactionAdds) }
+
             launch { client.on(MemberJoinEvent::class.java).addListener(MemberJoinDataCollector::collect) }
             launch { client.on(MemberLeaveEvent::class.java).addListener(MemberLeaveDataCollector::collect) }
-            launch { client.on(BanEvent::class.java).addListener(BanDataCollector::collect) }
             launch { client.on(MemberUpdateEvent::class.java).addListener(NicknameDataCollector::collect) }
+            launch { client.on(BanEvent::class.java).addListener(BanDataCollector::collect) }
+
             launch { client.on(VoiceStateUpdateEvent::class.java).addListener(VoiceDataCollector::collect) }
-            launch { client.on(MessageCreateEvent::class.java).addListener(EmojiDataCollector::collectFromMessages) }
         }
     }.block()
 }
