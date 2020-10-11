@@ -18,7 +18,7 @@ internal data class Emoji(
     fun toDataPoint(): Point =
         Point.measurement("emoji")
             .addTag("guildId", guildId)
-            .addTag("channeId", channelId)
+            .addTag("channelId", channelId)
             .addTag("source", source.name)
             .addTag("type", type.name)
             .addField("id", value)
