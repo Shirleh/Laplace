@@ -5,14 +5,13 @@ import com.github.shirleh.datacollection.*
 import com.github.shirleh.datacollection.emoji.EmojiDataCollector
 import discord4j.core.DiscordClient
 import discord4j.core.event.domain.Event
-import discord4j.core.event.domain.guild.BanEvent
 import discord4j.core.event.domain.VoiceStateUpdateEvent
+import discord4j.core.event.domain.guild.BanEvent
 import discord4j.core.event.domain.guild.MemberJoinEvent
 import discord4j.core.event.domain.guild.MemberLeaveEvent
 import discord4j.core.event.domain.guild.MemberUpdateEvent
 import discord4j.core.event.domain.message.MessageCreateEvent
 import discord4j.core.event.domain.message.ReactionAddEvent
-import discord4j.core.event.domain.message.ReactionRemoveEvent
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
