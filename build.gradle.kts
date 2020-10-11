@@ -3,7 +3,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     application
     id("com.github.johnrengelman.shadow") version "5.2.0"
-    kotlin("jvm") version "1.3.72"
+    kotlin("jvm") version "1.4.10"
     kotlin("kapt") version "1.4.10"
 }
 
@@ -19,23 +19,22 @@ repositories {
     jcenter()
 }
 
-val kotlinVersion by extra("1.3.72")
-val kotlinCoroutinesVersion by extra("1.3.7")
+val kotlinVersion by extra("1.4.10")
+val kotlinCoroutinesVersion by extra("1.3.9")
 
 val arrowVersion by extra("0.11.0")
 val koinVersion by extra("2.1.6")
 
-val discord4jVersion by extra("3.1.0.RC2")
+val discord4jVersion by extra("3.1.1")
 val cliktVersion by extra("3.0.1")
 val emojiJavaVersion by extra("5.1.1")
-val influxDBVersion by extra("1.8.0")
+val influxDBVersion by extra("1.12.0")
 
-val kotlinLoggingVersion by extra("1.7.9")
+val kotlinLoggingVersion by extra("2.0.3")
 val logbackVersion by extra("1.2.3")
-val spekVersion by extra("2.0.10")
+val spekVersion by extra("2.0.13")
 
 dependencies {
-    implementation(kotlin("stdlib-jdk8"))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinCoroutinesVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:$kotlinCoroutinesVersion")
 
@@ -63,10 +62,7 @@ dependencies {
 tasks {
     withType<KotlinCompile> {
         kotlinOptions.jvmTarget = "1.8"
-        kotlinOptions.freeCompilerArgs = listOf(
-            "-Xopt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
-            "-Xopt-in=kotlin.RequiresOptIn"
-        )
+        kotlinOptions.freeCompilerArgs = listOf("-Xopt-in=kotlin.RequiresOptIn")
     }
     withType<Test> {
         useJUnitPlatform {
