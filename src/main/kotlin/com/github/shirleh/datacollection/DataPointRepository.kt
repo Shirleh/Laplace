@@ -11,4 +11,9 @@ interface DataPointRepository {
      * Saves a data [point] into InfluxDB.
      */
     fun save(point: Point)
+
+    /**
+     * Saves all data [points] into InfluxDB.
+     */
+    fun save(points: List<Point>)
 }

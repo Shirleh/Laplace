@@ -2,6 +2,7 @@ package com.github.shirleh
 
 import com.github.shirleh.command.CommandHandler
 import com.github.shirleh.datacollection.*
+import com.github.shirleh.datacollection.emoji.EmojiDataCollector
 import discord4j.core.DiscordClient
 import discord4j.core.event.domain.Event
 import discord4j.core.event.domain.guild.BanEvent
@@ -45,6 +46,7 @@ fun main() = runBlocking<Unit> {
             launch { client.on(BanEvent::class.java).addListener(BanDataCollector::collect) }
             launch { client.on(MemberUpdateEvent::class.java).addListener(NicknameDataCollector::collect) }
             launch { client.on(VoiceStateUpdateEvent::class.java).addListener(VoiceDataCollector::collect) }
+            launch { client.on(MessageCreateEvent::class.java).addListener(EmojiDataCollector::collectFromMessages) }
         }
     }.block()
 }
