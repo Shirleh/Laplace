@@ -2,7 +2,10 @@ package com.github.shirleh.datacollection.emoji
 
 import com.github.shirleh.datacollection.DataPointRepository
 import com.vdurmont.emoji.EmojiParser
+import discord4j.common.util.Snowflake
+import discord4j.core.`object`.reaction.ReactionEmoji
 import discord4j.core.event.domain.message.MessageCreateEvent
+import discord4j.core.event.domain.message.ReactionAddEvent
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filter
@@ -77,4 +80,43 @@ object EmojiDataCollector : KoinComponent {
                     value = it[1]
                 )
             }
+
+    /**
+     * Collects emoji data from the incoming [events].
+     */
+    suspend fun collectFromReactionAdds(events: Flow<ReactionAddEvent>) {
+        events
+            .filter { it.guildId.isPresent }
+            .map {
+                toEmoji(
+                    reactionEmoji = it.emoji,
+                    guildId = it.guildId.map(Snowflake::asString).orElseThrow(),
+                    channelId = it.channelId.asString()
+                )
+            }
+            .map(Emoji::toDataPoint)
+            .collect(dataPointRepository::save)
+    }
+
+    private fun toEmoji(reactionEmoji: ReactionEmoji, guildId: String, channelId: String): Emoji {
+        logger.entry(reactionEmoji, guildId, channelId)
+
+        val (type, value) =
+            reactionEmoji.asUnicodeEmoji()
+                .map { Pair(Type.UNICODE, it.raw) }
+                .orElseGet {
+                    reactionEmoji.asCustomEmoji()
+                        .map { Pair(Type.CUSTOM, it.id.asString()) }
+                        .orElseThrow()
+                }
+        val result = Emoji(
+            guildId = guildId,
+            channelId = channelId,
+            source = Source.REACTION,
+            type = type,
+            value = value
+        )
+
+        return logger.exit(result)
+    }
 }
