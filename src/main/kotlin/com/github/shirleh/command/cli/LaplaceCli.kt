@@ -1,9 +1,11 @@
 package com.github.shirleh.command.cli
 
 import com.github.ajalt.clikt.core.subcommands
-import com.github.shirleh.HealthCheck
-import com.github.shirleh.PingCommand
-import com.github.shirleh.UptimeCommand
+import com.github.shirleh.*
+import com.github.shirleh.administration.AddChannelCommand
+import com.github.shirleh.administration.Administration
+import com.github.shirleh.administration.Channel
+import com.github.shirleh.administration.RemoveChannelCommand
 import discord4j.core.event.domain.message.MessageCreateEvent
 
 internal class Laplace : AbstractCommand(name = "@Laplace") {
@@ -19,6 +21,12 @@ internal class Laplace : AbstractCommand(name = "@Laplace") {
 
 internal val laplaceCli: () -> Laplace = {
     Laplace().subcommands(
+        Administration().subcommands(
+            Channel().subcommands(
+                AddChannelCommand(),
+                RemoveChannelCommand(),
+            )
+        ),
         HealthCheck().subcommands(
             PingCommand(),
             UptimeCommand(),

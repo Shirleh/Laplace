@@ -6,12 +6,13 @@ import arrow.core.right
 import com.github.ajalt.clikt.core.*
 import discord4j.core.event.domain.message.MessageCreateEvent
 import mu.KotlinLogging
+import org.koin.core.KoinComponent
 
 abstract class AbstractCommand(
     help: String = "",
     epilog: String = "",
     name: String? = null,
-) : CliktCommand(
+) : KoinComponent, CliktCommand(
     help,
     epilog,
     name

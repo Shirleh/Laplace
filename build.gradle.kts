@@ -29,7 +29,10 @@ val configVersion by extra("1.4.0")
 val discord4jVersion by extra("3.1.1")
 val cliktVersion by extra("3.0.1")
 val emojiJavaVersion by extra("5.1.1")
+
 val influxDBVersion by extra("1.12.0")
+val exposedVersion by extra("0.25.1")
+val sqliteVersion by extra("3.30.1")
 
 val kotlinLoggingVersion by extra("2.0.3")
 val logbackVersion by extra("1.2.3")
@@ -48,9 +51,14 @@ dependencies {
     implementation("com.discord4j:discord4j-core:$discord4jVersion")
     implementation("com.github.ajalt.clikt:clikt:${cliktVersion}")
     implementation("com.vdurmont:emoji-java:${emojiJavaVersion}")
+
     implementation("com.influxdb:influxdb-client-java:$influxDBVersion")
     implementation("com.influxdb:influxdb-client-kotlin:$influxDBVersion")
     implementation("com.influxdb:flux-dsl:$influxDBVersion")
+    implementation("org.jetbrains.exposed:exposed-core:$exposedVersion")
+    implementation("org.jetbrains.exposed:exposed-dao:$exposedVersion")
+    implementation("org.jetbrains.exposed:exposed-jdbc:$exposedVersion")
+    implementation("org.xerial:sqlite-jdbc:${sqliteVersion}")
 
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
     implementation("io.github.microutils:kotlin-logging:$kotlinLoggingVersion")
@@ -64,7 +72,7 @@ dependencies {
 tasks {
     withType<KotlinCompile> {
         kotlinOptions.jvmTarget = "1.8"
-        kotlinOptions.freeCompilerArgs = listOf("-Xopt-in=kotlin.RequiresOptIn")
+        kotlinOptions.freeCompilerArgs = listOf("-Xopt-in=kotlin.RequiresOptIn", "-Xinline-classes")
     }
     withType<Test> {
         useJUnitPlatform {
