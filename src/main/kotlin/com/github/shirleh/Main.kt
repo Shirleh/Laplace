@@ -34,7 +34,7 @@ fun main() = runBlocking<Unit> {
     }
 
     startKoin {
-        modules(dataCollectionModule)
+        modules(mainModule, dataCollectionModule)
     }
 
     DiscordClient.create(token).withGateway { client ->
