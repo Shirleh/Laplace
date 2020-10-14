@@ -25,7 +25,7 @@
         <appender-ref ref="CONSOLE"/>
     </root>
 
-    <logger name="com.github.shirleh" level="TRACE">
-        <appender-ref ref="FLOW"/>
-    </logger>
+<!--    <logger name="com.github.shirleh" level="TRACE">-->
+<!--        <appender-ref ref="FLOW"/>-->
+<!--    </logger>-->
 </configuration>
