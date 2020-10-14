@@ -5,5 +5,8 @@ build/
 # IntelliJ
 .idea/
 
+# SQLite
+/data/data.db
+
 # Docker
 *.txt

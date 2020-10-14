@@ -43,7 +43,7 @@ fun main() = runBlocking<Unit> {
         modules(mainModule, administrationModule, dataCollectionModule)
     }
 
-    Database.connect("jdbc:sqlite:${System.getProperty("user.home")}/.laplace/data.db", "org.sqlite.JDBC")
+    Database.connect("jdbc:sqlite:./data/data.db", "org.sqlite.JDBC")
     transaction { SchemaUtils.createMissingTablesAndColumns(Guilds, Channels) }
 
     DiscordClient.create(token).withGateway { client ->
