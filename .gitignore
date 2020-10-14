@@ -9,4 +9,6 @@ build/
 /data/data.db
 
 # Docker
-*.txt
+discord_token.txt
+influx_token.txt
+/application.conf
