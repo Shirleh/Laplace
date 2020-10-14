@@ -4,7 +4,7 @@ services:
   influxdb:
     image: quay.io/influxdb/influxdb:2.0.0-beta
     ports:
-    - "9999:9999"
+      - "9999:9999"
     volumes:
       - influx_data:/var/lib/influxdb
 
@@ -12,6 +12,7 @@ services:
     depends_on:
       - influxdb
     build: .
+    image: laplace_app
     environment:
       DISCORD_TOKEN_FILE: /run/secrets/discord_token
       INFLUX_URL: influxdb:9999
@@ -21,6 +22,11 @@ services:
     secrets:
       - discord_token
       - influx_token
+    configs:
+      - app_config
+
+volumes:
+  influx_data:
 
 secrets:
   discord_token:
@@ -28,5 +34,6 @@ secrets:
   influx_token:
     file: influx_token.txt
 
-volumes:
-  influx_data:
+configs:
+  app_config:
+    file: application.conf
