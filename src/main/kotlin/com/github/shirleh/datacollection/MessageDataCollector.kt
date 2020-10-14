@@ -1,8 +1,10 @@
 package com.github.shirleh.datacollection
 
+import com.github.shirleh.administration.ChannelRepository
 import com.github.shirleh.extensions.orElseNull
 import com.influxdb.client.domain.WritePrecision
 import com.influxdb.client.write.Point
+import discord4j.common.util.Snowflake
 import discord4j.core.event.domain.message.MessageCreateEvent
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
@@ -16,6 +18,7 @@ object MessageDataCollector : KoinComponent {
 
     private val logger = KotlinLogging.logger { }
 
+    private val channelRepository: ChannelRepository by inject()
     private val dataPointRepository: DataPointRepository by inject()
 
     /**
@@ -23,6 +26,11 @@ object MessageDataCollector : KoinComponent {
      */
     suspend fun collect(events: Flow<MessageCreateEvent>) {
         events
+            .filter { event ->
+                val guildId = event.guildId.map(Snowflake::asLong).orElseNull() ?: return@filter false
+                val channelId = event.message.channelId.asLong()
+                channelRepository.findAll(guildId).contains(channelId)
+            }
             .filter { event -> event.message.author.map { !it.isBot }.orElse(false) }
             .mapNotNull(::toDataPoint)
             .collect(dataPointRepository::save)

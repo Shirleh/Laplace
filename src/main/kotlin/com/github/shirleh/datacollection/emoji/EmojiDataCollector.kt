@@ -1,6 +1,8 @@
 package com.github.shirleh.datacollection.emoji
 
+import com.github.shirleh.administration.ChannelRepository
 import com.github.shirleh.datacollection.DataPointRepository
+import com.github.shirleh.extensions.orElseNull
 import com.vdurmont.emoji.EmojiParser
 import discord4j.common.util.Snowflake
 import discord4j.core.`object`.reaction.ReactionEmoji
@@ -21,6 +23,7 @@ object EmojiDataCollector : KoinComponent {
 
     private val logger = KotlinLogging.logger { }
 
+    private val channelRepository: ChannelRepository by inject()
     private val dataPointRepository: DataPointRepository by inject()
 
     /**
@@ -28,7 +31,12 @@ object EmojiDataCollector : KoinComponent {
      */
     suspend fun collectFromMessages(events: Flow<MessageCreateEvent>) {
         events
-            .filter { it.guildId.isPresent }
+            .filter { event ->
+                val guildId = event.guildId.map(Snowflake::asLong).orElseNull() ?: return@filter false
+                val channelId = event.message.channelId.asLong()
+                channelRepository.findAll(guildId).contains(channelId)
+            }
+            .filter { event -> event.message.author.map { !it.isBot }.orElse(false) }
             .map(EmojiDataCollector::parseToEmojis)
             .map { it.map(Emoji::toDataPoint) }
             .collect(dataPointRepository::save)
@@ -86,7 +94,12 @@ object EmojiDataCollector : KoinComponent {
      */
     suspend fun collectFromReactionAdds(events: Flow<ReactionAddEvent>) {
         events
-            .filter { it.guildId.isPresent }
+            .filter { event ->
+                val guildId = event.guildId.map(Snowflake::asLong).orElseNull() ?: return@filter false
+                val channelId = event.channelId.asLong()
+                channelRepository.findAll(guildId).contains(channelId)
+            }
+            .filter { event -> event.member.map { !it.isBot }.orElse(false) }
             .map {
                 toEmoji(
                     reactionEmoji = it.emoji,
