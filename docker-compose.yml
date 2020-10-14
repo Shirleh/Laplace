@@ -19,6 +19,8 @@ services:
       INFLUX_ORG: tph
       INFLUX_BUCKET: laplace
       INFLUX_TOKEN_FILE: /run/secrets/influx_token
+    volumes:
+      - sqlite_data:/data
     secrets:
       - discord_token
       - influx_token
@@ -27,6 +29,7 @@ services:
 
 volumes:
   influx_data:
+  sqlite_data:
 
 secrets:
   discord_token:
