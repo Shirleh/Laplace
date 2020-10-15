@@ -10,5 +10,5 @@ build/
 
 # Docker
 discord_token.txt
-influx_token.txt
+influx2_token.txt
 /application.conf

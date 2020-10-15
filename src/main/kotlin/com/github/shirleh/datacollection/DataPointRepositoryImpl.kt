@@ -1,13 +1,11 @@
 package com.github.shirleh.datacollection
 
-import com.influxdb.client.InfluxDBClientFactory
+import com.influxdb.client.WriteApi
 import com.influxdb.client.write.Point
 
-class DataPointRepositoryImpl : DataPointRepository {
+class DataPointRepositoryImpl(private val writeApi: WriteApi) : DataPointRepository {
 
-    private val influxDBClient = InfluxDBClientFactory.create()
+    override fun save(point: Point) = writeApi.writePoint(point)
 
-    override fun save(point: Point) = influxDBClient.writeApi.use { it.writePoint(point) }
-
-    override fun save(points: List<Point>) = influxDBClient.writeApi.use { it.writePoints(points) }
+    override fun save(points: List<Point>) = writeApi.writePoints(points)
 }
