@@ -15,15 +15,13 @@ services:
     image: laplace_app
     environment:
       DISCORD_TOKEN_FILE: /run/secrets/discord_token
-      INFLUX_URL: influxdb:9999
-      INFLUX_ORG: tph
-      INFLUX_BUCKET: laplace
-      INFLUX_TOKEN_FILE: /run/secrets/influx_token
+      INFLUX2_URL: http://influxdb:9999
+      INFLUX2_TOKEN_FILE: /run/secrets/influx2_token
     volumes:
       - sqlite_data:/data
     secrets:
       - discord_token
-      - influx_token
+      - influx2_token
     configs:
       - app_config
 
@@ -34,8 +32,8 @@ volumes:
 secrets:
   discord_token:
     file: discord_token.txt
-  influx_token:
-    file: influx_token.txt
+  influx2_token:
+    file: influx2_token.txt
 
 configs:
   app_config:
