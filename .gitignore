@@ -11,4 +11,4 @@ build/
 # Docker
 discord_token.txt
 influx2_token.txt
-/application.conf
+application.prod.conf

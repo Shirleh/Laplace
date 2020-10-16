@@ -37,4 +37,4 @@ secrets:
 
 configs:
   app_config:
-    file: application.conf
+    file: application.prod.conf
