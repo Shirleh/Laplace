@@ -6,6 +6,7 @@ import com.github.shirleh.administration.administrationModule
 import com.github.shirleh.command.CommandHandler
 import com.github.shirleh.datacollection.*
 import com.github.shirleh.datacollection.emoji.EmojiDataCollector
+import com.github.shirleh.datacollection.MessageDataCollector
 import com.github.shirleh.persistence.persistenceModule
 import discord4j.core.DiscordClient
 import discord4j.core.event.domain.Event
