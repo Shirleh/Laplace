@@ -12,7 +12,7 @@ import org.koin.core.KoinComponent
 import org.koin.core.inject
 import java.time.Instant
 
-private data class Message(
+private data class MessageData(
     val guildId: String,
     val channelId: String,
     val authorId: String,
@@ -45,12 +45,12 @@ object MessageDataCollector : KoinComponent {
                 channelRepository.findAll(guildId).contains(channelId)
             }
             .filter { event -> event.message.author.map { !it.isBot }.orElse(false) }
-            .mapNotNull(MessageDataCollector::toMessage)
-            .map(Message::toDataPoint)
+            .mapNotNull(MessageDataCollector::toMessageData)
+            .map(MessageData::toDataPoint)
             .collect(dataPointRepository::save)
     }
 
-    private fun toMessage(event: MessageCreateEvent): Message? {
+    private fun toMessageData(event: MessageCreateEvent): MessageData? {
         logger.entry(event)
 
         val guildId = event.guildId.map(Snowflake::asString).orElseNull() ?: return logger.exit(null)
@@ -59,7 +59,7 @@ object MessageDataCollector : KoinComponent {
         val authorId = message.author.map { it.id.asString() }.orElseNull() ?: return logger.exit(null)
         val timestamp = message.timestamp
 
-        val result = Message(
+        val result = MessageData(
             guildId = guildId,
             channelId = channelId,
             authorId = authorId,
