@@ -6,13 +6,26 @@ import com.influxdb.client.domain.WritePrecision
 import com.influxdb.client.write.Point
 import discord4j.common.util.Snowflake
 import discord4j.core.event.domain.message.MessageCreateEvent
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.*
 import mu.KotlinLogging
 import org.koin.core.KoinComponent
 import org.koin.core.inject
+import java.time.Instant
+
+private data class Message(
+    val guildId: String,
+    val channelId: String,
+    val authorId: String,
+    val count: Long,
+    val timestamp: Instant
+) {
+    fun toDataPoint() = Point.measurement("message_count")
+        .addTag("guildId", guildId)
+        .addTag("channel", channelId)
+        .addTag("author", authorId)
+        .addField("count", count)
+        .time(timestamp, WritePrecision.S)
+}
 
 object MessageDataCollector : KoinComponent {
 
@@ -32,25 +45,27 @@ object MessageDataCollector : KoinComponent {
                 channelRepository.findAll(guildId).contains(channelId)
             }
             .filter { event -> event.message.author.map { !it.isBot }.orElse(false) }
-            .mapNotNull(::toDataPoint)
+            .mapNotNull(MessageDataCollector::toMessage)
+            .map(Message::toDataPoint)
             .collect(dataPointRepository::save)
     }
 
-    private fun toDataPoint(event: MessageCreateEvent): Point? {
+    private fun toMessage(event: MessageCreateEvent): Message? {
         logger.entry(event)
 
+        val guildId = event.guildId.map(Snowflake::asString).orElseNull() ?: return logger.exit(null)
         val message = event.message
-
         val channelId = message.channelId.asString()
         val authorId = message.author.map { it.id.asString() }.orElseNull() ?: return logger.exit(null)
-        val contentLength = message.content.let { if (it.isBlank()) 0 else it.length }
         val timestamp = message.timestamp
 
-        val result = Point.measurement("message")
-            .addTag("channel", channelId)
-            .addTag("author", authorId)
-            .addField("length", contentLength)
-            .time(timestamp, WritePrecision.S)
+        val result = Message(
+            guildId = guildId,
+            channelId = channelId,
+            authorId = authorId,
+            count = 1L,
+            timestamp = timestamp
+        )
 
         return logger.exit(result)
     }
