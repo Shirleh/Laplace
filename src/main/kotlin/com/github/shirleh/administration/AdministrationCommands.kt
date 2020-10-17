@@ -21,7 +21,11 @@ class Administration : AbstractCommandCategory(
 class Channel : AbstractCommandCategory(
     name = "channel",
     help = "Contains commands to manage the channels Laplace listens to."
-)
+) {
+    override fun aliases(): Map<String, List<String>> = mapOf(
+        "ls" to listOf("list")
+    )
+}
 
 private const val OK_HAND_EMOJI = "\uD83D\uDC4C"
 
