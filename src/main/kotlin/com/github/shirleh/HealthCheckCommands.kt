@@ -9,14 +9,20 @@ import java.time.Duration
 
 class HealthCheck : AbstractCommandCategory(name = "health")
 
-class PingCommand : AbstractCommand() {
+class PingCommand : AbstractCommand(
+    name = "ping",
+    help = """Replies with "Pong!"."""
+) {
     override suspend fun execute(event: MessageCreateEvent) {
         val channel = event.message.channel.await()
         channel.createMessage("Pong!").await()
     }
 }
 
-class UptimeCommand : AbstractCommand() {
+class UptimeCommand : AbstractCommand(
+    name = "uptime",
+    help = """Shows the amount of time Laplace is up and running."""
+) {
     override suspend fun execute(event: MessageCreateEvent) {
         val uptime = ManagementFactory.getRuntimeMXBean().uptime
         val duration = Duration.ofMillis(uptime)

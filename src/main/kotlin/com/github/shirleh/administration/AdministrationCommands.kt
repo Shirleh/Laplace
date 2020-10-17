@@ -14,19 +14,24 @@ import discord4j.rest.util.Color
 import org.koin.core.inject
 
 class Administration : AbstractCommandCategory(
-    help = "Contains commands for administrations. Staff only!",
-    name = "admin"
+    name = "admin",
+    help = "Contains commands for administrations. Staff only!"
 )
 
 class Channel : AbstractCommandCategory(
-    help = "Contains commands to manage the channels Laplace listens to",
-    name = "channel"
+    name = "channel",
+    help = "Contains commands to manage the channels Laplace listens to."
 )
 
 private const val OK_HAND_EMOJI = "\uD83D\uDC4C"
 
-class ListChannelsCommand : AbstractCommand(name = "list") {
-
+class ListChannelsCommand : AbstractCommand(
+    name = "list",
+    help = """Lists all channels.
+    
+    This will list all channels Laplace is listening to for data.    
+    """
+) {
     private val config: Configuration by inject()
     private val channelRepository: ChannelRepository by inject()
 
@@ -49,8 +54,12 @@ class ListChannelsCommand : AbstractCommand(name = "list") {
     }
 }
 
-class AddChannelCommand : AbstractCommand(name = "add") {
-
+class AddChannelCommand : AbstractCommand(
+    name = "add",
+    help = """Adds a channel.
+    
+    This will add a channel to the list of channels Laplace listens to for data."""
+) {
     private val config: Configuration by inject()
     private val channelRepository: ChannelRepository by inject()
 
@@ -68,8 +77,12 @@ class AddChannelCommand : AbstractCommand(name = "add") {
     }
 }
 
-class RemoveChannelCommand : AbstractCommand(name = "remove") {
-
+class RemoveChannelCommand : AbstractCommand(
+    name = "remove",
+    help = """Removes a channel.
+    
+    This will remove a channel from the list of channels Laplace listens to for data."""
+) {
     private val config: Configuration by inject()
     private val channelRepository: ChannelRepository by inject()
 
