@@ -2,10 +2,7 @@ package com.github.shirleh.command.cli
 
 import com.github.ajalt.clikt.core.subcommands
 import com.github.shirleh.*
-import com.github.shirleh.administration.AddChannelCommand
-import com.github.shirleh.administration.Administration
-import com.github.shirleh.administration.Channel
-import com.github.shirleh.administration.RemoveChannelCommand
+import com.github.shirleh.administration.*
 import discord4j.core.event.domain.message.MessageCreateEvent
 
 internal class Laplace : AbstractCommand(name = "@Laplace") {
@@ -23,6 +20,7 @@ internal val laplaceCli: () -> Laplace = {
     Laplace().subcommands(
         Administration().subcommands(
             Channel().subcommands(
+                ListChannelsCommand(),
                 AddChannelCommand(),
                 RemoveChannelCommand(),
             )
