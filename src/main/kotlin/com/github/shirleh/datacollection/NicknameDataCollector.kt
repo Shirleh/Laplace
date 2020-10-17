@@ -15,7 +15,13 @@ import org.koin.core.KoinComponent
 import org.koin.core.inject
 import java.time.Instant
 
-private data class NicknameChange(val author: String, val oldNickname: String, val newNickname: String)
+private data class NicknameChange(val author: String, val oldNickname: String, val newNickname: String) {
+    fun toDataPoint() = Point.measurement("nickname")
+        .addTag("author", author)
+        .addField("oldNickname", oldNickname)
+        .addField("currentNickname", newNickname)
+        .time(Instant.now(), WritePrecision.S)
+}
 
 object NicknameDataCollector : KoinComponent {
 
@@ -30,7 +36,7 @@ object NicknameDataCollector : KoinComponent {
         events
             .onEach { delay(AUDIT_LOG_UPDATE_DELAY) }
             .mapNotNull(::findNicknameChange)
-            .map(::toDataPoint)
+            .map(NicknameChange::toDataPoint)
             .collect(dataPointRepository::save)
 
     private suspend fun findNicknameChange(event: MemberUpdateEvent): NicknameChange? {
@@ -53,18 +59,6 @@ object NicknameDataCollector : KoinComponent {
             }
             .filter { change -> event.currentNickname.map { it == change.newNickname }.orElse(false) }
             .firstOrNull()
-
-        return logger.exit(result)
-    }
-
-    private fun toDataPoint(change: NicknameChange): Point {
-        logger.entry(change)
-
-        val result = Point.measurement("nickname")
-            .addTag("author", change.author)
-            .addField("oldNickname", change.oldNickname)
-            .addField("currentNickname", change.newNickname)
-            .time(Instant.now(), WritePrecision.S)
 
         return logger.exit(result)
     }
