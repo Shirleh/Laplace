@@ -5,6 +5,7 @@ import com.influxdb.client.write.Point
 import discord4j.core.event.domain.guild.MemberJoinEvent
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import mu.KotlinLogging
 import org.koin.core.KoinComponent
@@ -35,6 +36,7 @@ object MemberJoinDataCollector : KoinComponent {
      */
     suspend fun collect(events: Flow<MemberJoinEvent>) {
         events
+            .filter { event -> !event.member.isBot }
             .map(MemberJoinDataCollector::toJoinData)
             .map(JoinData::toDataPoint)
             .collect(dataPointRepository::save)
