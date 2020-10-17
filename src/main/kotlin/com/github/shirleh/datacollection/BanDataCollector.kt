@@ -14,6 +14,13 @@ import org.koin.core.KoinComponent
 import org.koin.core.inject
 import java.time.Instant
 
+private data class BanData(val author: String, val count: Long = 1L) {
+    fun toDataPoint() = Point.measurement("bans")
+        .addTag("author", author)
+        .addField("count", 1)
+        .time(Instant.now(), WritePrecision.S)
+}
+
 object BanDataCollector : KoinComponent {
 
     private val logger = KotlinLogging.logger { }
@@ -26,8 +33,9 @@ object BanDataCollector : KoinComponent {
     suspend fun collect(events: Flow<BanEvent>) =
         events
             .onEach { delay(AUDIT_LOG_UPDATE_DELAY) }
-            .mapNotNull(::findBanAuthorId)
-            .map(::toDataPoint)
+            .mapNotNull(BanDataCollector::findBanAuthorId)
+            .map(BanDataCollector::toDataPoint)
+            .map(BanData::toDataPoint)
             .collect(dataPointRepository::save)
 
     private suspend fun findBanAuthorId(event: BanEvent): Snowflake? {
@@ -43,13 +51,10 @@ object BanDataCollector : KoinComponent {
         return logger.exit(result)
     }
 
-    private fun toDataPoint(banAuthorId: Snowflake): Point {
+    private fun toDataPoint(banAuthorId: Snowflake): BanData {
         logger.entry(banAuthorId)
 
-        val result = Point.measurement("bans")
-            .addTag("author", banAuthorId.asString())
-            .addField("count", 1)
-            .time(Instant.now(), WritePrecision.S)
+        val result = BanData(banAuthorId.asString())
 
         return logger.exit(result)
     }
