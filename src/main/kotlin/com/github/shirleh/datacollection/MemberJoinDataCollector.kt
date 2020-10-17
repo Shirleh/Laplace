@@ -9,6 +9,20 @@ import kotlinx.coroutines.flow.map
 import mu.KotlinLogging
 import org.koin.core.KoinComponent
 import org.koin.core.inject
+import java.time.Instant
+
+private data class JoinData(
+    val guildId: String,
+    val creationDate: Instant,
+    val isBoosting: Boolean,
+    val joinTime: Instant,
+) {
+    fun toDataPoint() = Point.measurement("member_join")
+        .addTag("guildId", guildId)
+        .addField("creationDate", creationDate.epochSecond)
+        .addField("isBoosting", isBoosting)
+        .time(joinTime, WritePrecision.S)
+}
 
 object MemberJoinDataCollector : KoinComponent {
 
@@ -21,28 +35,22 @@ object MemberJoinDataCollector : KoinComponent {
      */
     suspend fun collect(events: Flow<MemberJoinEvent>) {
         events
-            .map(::toDataPoint)
+            .map(MemberJoinDataCollector::toJoinData)
+            .map(JoinData::toDataPoint)
             .collect(dataPointRepository::save)
     }
 
-    private fun toDataPoint(event: MemberJoinEvent): Point {
+    private fun toJoinData(event: MemberJoinEvent): JoinData {
         logger.entry(event)
 
         val member = event.member
 
-        val guildId = event.guildId.asString()
-        val guildMemberId = member.id.asString()
-        val creationDate = member.id.timestamp.epochSecond
-        val isBot = member.isBot
-        val timestamp = member.joinTime
-
-        val result = Point.measurement("guildMembership")
-            .addTag("event", "join")
-            .addTag("guildId", guildId)
-            .addTag("guildMemberId", guildMemberId)
-            .addField("creationDate", creationDate)
-            .addField("isBot", isBot)
-            .time(timestamp, WritePrecision.S)
+        val result = JoinData(
+            guildId = event.guildId.asString(),
+            creationDate = member.id.timestamp,
+            isBoosting = member.premiumTime.isPresent,
+            joinTime = member.joinTime
+        )
 
         return logger.exit(result)
     }
