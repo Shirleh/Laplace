@@ -1,7 +1,6 @@
 package com.github.shirleh.administration
 
 import com.github.ajalt.clikt.parameters.arguments.argument
-import com.github.ajalt.clikt.parameters.types.int
 import com.github.ajalt.clikt.parameters.types.long
 import com.github.shirleh.Configuration
 import com.github.shirleh.command.cli.AbstractCommand
@@ -11,13 +10,6 @@ import com.github.shirleh.extensions.orElseNull
 import discord4j.common.util.Snowflake
 import discord4j.core.`object`.reaction.ReactionEmoji
 import discord4j.core.event.domain.message.MessageCreateEvent
-import kotlinx.coroutines.Dispatchers
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.insertIgnore
-import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
-import org.jetbrains.exposed.sql.transactions.experimental.suspendedTransaction
 import org.koin.core.inject
 
 class Administration : AbstractCommandCategory(
@@ -30,7 +22,7 @@ class Channel : AbstractCommandCategory(
     name = "channel"
 )
 
-private const val OK_HAND = "\uD83D\uDC4C"
+private const val OK_HAND_EMOJI = "\uD83D\uDC4C"
 
 class AddChannelCommand : AbstractCommand(name = "add") {
 
@@ -47,7 +39,7 @@ class AddChannelCommand : AbstractCommand(name = "add") {
         val guildId = event.guildId.map(Snowflake::asLong).orElseNull() ?: return
         channelRepository.save(channelId, guildId)
 
-        event.message.addReaction(ReactionEmoji.unicode(OK_HAND)).await()
+        event.message.addReaction(ReactionEmoji.unicode(OK_HAND_EMOJI)).await()
     }
 }
 
@@ -66,6 +58,6 @@ class RemoveChannelCommand : AbstractCommand(name = "remove") {
         val guildId = event.guildId.map(Snowflake::asLong).orElseNull() ?: return
         channelRepository.delete(channelId, guildId)
 
-        event.message.addReaction(ReactionEmoji.unicode(OK_HAND)).await()
+        event.message.addReaction(ReactionEmoji.unicode(OK_HAND_EMOJI)).await()
     }
 }
