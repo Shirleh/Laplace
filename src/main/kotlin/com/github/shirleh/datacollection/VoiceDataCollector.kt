@@ -12,6 +12,28 @@ import org.koin.core.KoinComponent
 import org.koin.core.inject
 import java.time.Instant
 
+private data class VoiceStateData(
+    val guildId: String,
+    val channelId: String,
+    val memberId: String,
+    val isInVoice: Boolean,
+    val isMuted: Boolean,
+    val isSelfMuted: Boolean,
+    val isDeafened: Boolean,
+    val isSelfDeafened: Boolean,
+) {
+    fun toDataPoint() = Point.measurement("voiceState")
+        .addTag("guildId", guildId)
+        .addTag("channelId", channelId)
+        .addTag("guildMemberId", memberId)
+        .addField("isInVoice", isInVoice)
+        .addField("isMuted", isMuted)
+        .addField("isSelfMuted", isSelfMuted)
+        .addField("isDeafened", isDeafened)
+        .addField("isSelfDeafened", isSelfDeafened)
+        .time(Instant.now(), WritePrecision.S)
+}
+
 object VoiceDataCollector : KoinComponent {
 
     private val logger = KotlinLogging.logger { }
@@ -23,17 +45,17 @@ object VoiceDataCollector : KoinComponent {
      */
     suspend fun collect(events: Flow<VoiceStateUpdateEvent>) {
         events
-            .map(::toDataPoint)
+            .map(VoiceDataCollector::toVoiceStateData)
+            .map(VoiceStateData::toDataPoint)
             .collect(dataPointRepository::save)
     }
 
-    private fun toDataPoint(event: VoiceStateUpdateEvent): Point {
+    private fun toVoiceStateData(event: VoiceStateUpdateEvent): VoiceStateData {
         logger.entry(event)
 
         val voiceState = event.current
-
         val guildId = voiceState.guildId.asString()
-        val guildMemberId = voiceState.userId.asString()
+        val memberId = voiceState.userId.asString()
         val channelId = voiceState.channelId
             .map(Snowflake::asString)
             .orElseGet {
@@ -42,18 +64,16 @@ object VoiceDataCollector : KoinComponent {
                     .orElse("")
             }
 
-        val isMuted = voiceState.isMuted || voiceState.isSelfMuted
-        val isDeafened = voiceState.isDeaf || voiceState.isSelfDeaf
-        val isInVoice = voiceState.channelId.isPresent
-
-        val result = Point.measurement("voiceState")
-            .addTag("guildId", guildId)
-            .addTag("channelId", channelId)
-            .addTag("guildMemberId", guildMemberId)
-            .addField("isMuted", isMuted)
-            .addField("isDeafened", isDeafened)
-            .addField("isInVoice", isInVoice)
-            .time(Instant.now(), WritePrecision.S)
+        val result = VoiceStateData(
+            guildId = guildId,
+            channelId = channelId,
+            memberId = memberId,
+            isInVoice = voiceState.channelId.isPresent,
+            isMuted = voiceState.isMuted,
+            isSelfMuted = voiceState.isSelfMuted,
+            isDeafened = voiceState.isDeaf,
+            isSelfDeafened = voiceState.isSelfDeaf
+        )
 
         return logger.exit(result)
     }
