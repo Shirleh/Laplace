@@ -22,8 +22,6 @@ services:
     secrets:
       - discord_token
       - influx2_token
-    configs:
-      - app_config
 
 volumes:
   influx_data:
@@ -35,6 +33,3 @@ secrets:
   influx2_token:
     file: influx2_token.txt
 
-configs:
-  app_config:
-    file: application.prod.conf

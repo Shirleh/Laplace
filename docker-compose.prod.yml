@@ -1,0 +1,8 @@
+version: '3.8'
+
+services:
+  app:
+    environment:
+      DISCORD_SUPERUSER_ROLE_ID: # {{ required - role id to access administration commands }}
+      #INFLUX2_ORG: {{ optional - defaults to "laplace" }}
+      #INFLUX2_BUCKET: {{ optional - defaults to "raw_discord_data }}
