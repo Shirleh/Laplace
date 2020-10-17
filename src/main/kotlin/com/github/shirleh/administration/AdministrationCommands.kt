@@ -10,6 +10,7 @@ import com.github.shirleh.extensions.orElseNull
 import discord4j.common.util.Snowflake
 import discord4j.core.`object`.reaction.ReactionEmoji
 import discord4j.core.event.domain.message.MessageCreateEvent
+import discord4j.rest.util.Color
 import org.koin.core.inject
 
 class Administration : AbstractCommandCategory(
@@ -23,6 +24,30 @@ class Channel : AbstractCommandCategory(
 )
 
 private const val OK_HAND_EMOJI = "\uD83D\uDC4C"
+
+class ListChannelsCommand : AbstractCommand(name = "list") {
+
+    private val config: Configuration by inject()
+    private val channelRepository: ChannelRepository by inject()
+
+    override suspend fun execute(event: MessageCreateEvent) {
+        val member = event.member.orElseNull() ?: return
+        val superuserRoleId = Snowflake.of(config.superuserRoleId)
+        if (!member.roleIds.contains(superuserRoleId)) return
+
+        val guildId = event.guildId.map(Snowflake::asLong).orElseNull() ?: return
+
+        val result = channelRepository.findAll(guildId)
+            .map { "<#$it>" }
+
+        val channel = event.message.channel.await()
+        channel.createEmbed { spec ->
+            spec
+                .setDescription(result.toString())
+                .setColor(Color.WHITE)
+        }.await()
+    }
+}
 
 class AddChannelCommand : AbstractCommand(name = "add") {
 
