@@ -5,5 +5,4 @@ import org.koin.dsl.module
 
 val mainModule = module {
     single(createdAtStart = true) { ConfigFactory.load() }
-    single(createdAtStart = true) { Configuration(get()) }
 }
