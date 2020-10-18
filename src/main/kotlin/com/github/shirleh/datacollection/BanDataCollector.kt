@@ -15,7 +15,7 @@ import org.koin.core.inject
 import java.time.Instant
 
 private data class BanData(val author: String, val count: Long = 1L) {
-    fun toDataPoint() = Point.measurement("bans")
+    fun toDataPoint() = Point.measurement("ban")
         .addTag("author", author)
         .addField("count", 1)
         .time(Instant.now(), WritePrecision.S)
