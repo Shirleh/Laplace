@@ -1,6 +1,5 @@
-package com.github.shirleh.persistence
+package com.github.shirleh.persistence.influx
 
-import com.github.shirleh.Configuration
 import com.influxdb.client.InfluxDBClient
 import com.influxdb.client.InfluxDBClientFactory
 import mu.KotlinLogging
@@ -17,12 +16,12 @@ object InfluxClientFactory {
 
     private val logger = KotlinLogging.logger { }
     
-    fun create(config: Configuration): InfluxDBClient {
+    fun create(config: InfluxConfiguration): InfluxDBClient {
         val (url, token, org, bucket) = readInfluxProperties(config)
         return InfluxDBClientFactory.create(url, token, org, bucket)
     }
 
-    private fun readInfluxProperties(config: Configuration): InfluxProperties {
+    private fun readInfluxProperties(config: InfluxConfiguration): InfluxProperties {
         val file = File(System.getenv("INFLUX2_TOKEN_FILE") ?: "influx2_token.txt")
         val token = file.readText().trim().toCharArray()
 
