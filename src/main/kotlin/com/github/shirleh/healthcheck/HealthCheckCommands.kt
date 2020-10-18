@@ -1,4 +1,4 @@
-package com.github.shirleh
+package com.github.shirleh.healthcheck
 
 import com.github.shirleh.command.cli.AbstractCommand
 import com.github.shirleh.command.cli.AbstractCommandCategory

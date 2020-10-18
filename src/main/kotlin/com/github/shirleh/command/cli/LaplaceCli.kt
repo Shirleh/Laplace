@@ -1,8 +1,10 @@
 package com.github.shirleh.command.cli
 
 import com.github.ajalt.clikt.core.subcommands
-import com.github.shirleh.*
 import com.github.shirleh.administration.*
+import com.github.shirleh.healthcheck.HealthCheck
+import com.github.shirleh.healthcheck.PingCommand
+import com.github.shirleh.healthcheck.UptimeCommand
 import discord4j.core.event.domain.message.MessageCreateEvent
 
 internal class Laplace : AbstractCommand(name = "@Laplace") {
