@@ -2,7 +2,6 @@ package com.github.shirleh.administration
 
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.types.long
-import com.github.shirleh.Configuration
 import com.github.shirleh.command.cli.AbstractCommand
 import com.github.shirleh.command.cli.AbstractCommandCategory
 import com.github.shirleh.extensions.await
@@ -35,7 +34,7 @@ class ListChannelsCommand : AbstractCommand(
     name = "list",
     help = """Lists all channels."""
 ) {
-    private val config: Configuration by inject()
+    private val config: AdministrationConfiguration by inject()
     private val channelRepository: ChannelRepository by inject()
 
     override suspend fun execute(event: MessageCreateEvent) {
@@ -61,7 +60,7 @@ class AddChannelCommand : AbstractCommand(
     name = "add",
     help = """Adds a channel."""
 ) {
-    private val config: Configuration by inject()
+    private val config: AdministrationConfiguration by inject()
     private val channelRepository: ChannelRepository by inject()
 
     private val channelId by argument().long()
@@ -82,7 +81,7 @@ class RemoveChannelCommand : AbstractCommand(
     name = "remove",
     help = """Removes a channel."""
 ) {
-    private val config: Configuration by inject()
+    private val config: AdministrationConfiguration by inject()
     private val channelRepository: ChannelRepository by inject()
 
     private val channelId by argument().long()
