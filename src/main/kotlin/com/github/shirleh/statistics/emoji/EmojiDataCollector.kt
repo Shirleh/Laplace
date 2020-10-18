@@ -1,4 +1,4 @@
-package com.github.shirleh.datacollection.emoji
+package com.github.shirleh.statistics.emoji
 
 import com.github.shirleh.administration.ChannelRepository
 import com.github.shirleh.persistence.influx.DataPointRepository
