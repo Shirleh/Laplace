@@ -15,12 +15,14 @@ import org.koin.core.inject
 
 class Administration : AbstractCommandCategory(
     name = "admin",
-    help = "Contains commands for administrations. Staff only!"
+    help = "Manage Laplace. Staff only!"
 )
 
 class Channel : AbstractCommandCategory(
     name = "channel",
-    help = "Contains commands to manage the channels Laplace listens to."
+    help = """Manage channels.
+        
+    Configure which channels Laplace will collect its message-driven statistics from."""
 ) {
     override fun aliases(): Map<String, List<String>> = mapOf(
         "ls" to listOf("list")
@@ -31,10 +33,7 @@ private const val OK_HAND_EMOJI = "\uD83D\uDC4C"
 
 class ListChannelsCommand : AbstractCommand(
     name = "list",
-    help = """Lists all channels.
-    
-    This will list all channels Laplace is listening to for data.    
-    """
+    help = """Lists all channels."""
 ) {
     private val config: Configuration by inject()
     private val channelRepository: ChannelRepository by inject()
@@ -60,9 +59,7 @@ class ListChannelsCommand : AbstractCommand(
 
 class AddChannelCommand : AbstractCommand(
     name = "add",
-    help = """Adds a channel.
-    
-    This will add a channel to the list of channels Laplace listens to for data."""
+    help = """Adds a channel."""
 ) {
     private val config: Configuration by inject()
     private val channelRepository: ChannelRepository by inject()
@@ -83,9 +80,7 @@ class AddChannelCommand : AbstractCommand(
 
 class RemoveChannelCommand : AbstractCommand(
     name = "remove",
-    help = """Removes a channel.
-    
-    This will remove a channel from the list of channels Laplace listens to for data."""
+    help = """Removes a channel."""
 ) {
     private val config: Configuration by inject()
     private val channelRepository: ChannelRepository by inject()
