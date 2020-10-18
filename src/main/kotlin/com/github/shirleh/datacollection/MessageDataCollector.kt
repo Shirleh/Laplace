@@ -2,6 +2,7 @@ package com.github.shirleh.datacollection
 
 import com.github.shirleh.administration.ChannelRepository
 import com.github.shirleh.extensions.orElseNull
+import com.github.shirleh.persistence.influx.DataPointRepository
 import com.influxdb.client.domain.WritePrecision
 import com.influxdb.client.write.Point
 import discord4j.common.util.Snowflake

@@ -1,7 +1,7 @@
 package com.github.shirleh.datacollection.emoji
 
 import com.github.shirleh.administration.ChannelRepository
-import com.github.shirleh.datacollection.DataPointRepository
+import com.github.shirleh.persistence.influx.DataPointRepository
 import com.github.shirleh.extensions.orElseNull
 import com.vdurmont.emoji.EmojiParser
 import discord4j.common.util.Snowflake

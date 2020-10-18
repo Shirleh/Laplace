@@ -1,4 +1,4 @@
-package com.github.shirleh.datacollection
+package com.github.shirleh.persistence.influx
 
 import com.influxdb.client.write.Point
 
