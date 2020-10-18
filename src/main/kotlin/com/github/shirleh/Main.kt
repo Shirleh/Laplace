@@ -42,7 +42,7 @@ fun main() = runBlocking<Unit> {
     }
 
     startKoin {
-        modules(mainModule, influxModule, administrationModule, dataCollectionModule)
+        modules(mainModule, influxModule, administrationModule)
     }
 
     Database.connect("jdbc:sqlite:./data/data.db", "org.sqlite.JDBC")
