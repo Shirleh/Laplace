@@ -7,6 +7,7 @@ import discord4j.core.event.domain.guild.MemberLeaveEvent
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import mu.KotlinLogging
 import org.koin.core.KoinComponent
 import org.koin.core.inject
@@ -37,16 +38,19 @@ object MemberLeaveDataCollector : KoinComponent {
      */
     suspend fun collect(events: Flow<MemberLeaveEvent>) {
         events
-            .map(MemberLeaveDataCollector::toLeaveData)
+            .mapNotNull(MemberLeaveDataCollector::toLeaveData)
             .map(LeaveData::toDataPoint)
             .collect(dataPointRepository::save)
     }
 
-    private fun toLeaveData(event: MemberLeaveEvent): LeaveData {
+    private fun toLeaveData(event: MemberLeaveEvent): LeaveData? {
         logger.entry(event)
 
         val guildId = event.guildId.asString()
-        val member = event.member.orElseNull() ?: throw IllegalStateException("Member not present in MemberLeaveEvent?")
+        val member = event.member.orElseNull() ?: return run {
+            logger.error { "Member not found in cache. Data permanently lost. Should not happen with the right intents." }
+            null
+        }
         val joinTime = member.joinTime
         val leaveTime = Instant.now()
 
