@@ -1,13 +1,11 @@
 package com.github.shirleh
 
-import com.github.shirleh.administration.Channels
-import com.github.shirleh.administration.Guilds
 import com.github.shirleh.administration.administrationModule
 import com.github.shirleh.command.CommandHandler
 import com.github.shirleh.datacollection.*
 import com.github.shirleh.datacollection.emoji.EmojiDataCollector
-import com.github.shirleh.datacollection.MessageDataCollector
 import com.github.shirleh.persistence.influx.influxModule
+import com.github.shirleh.persistence.sqlite.sqliteModule
 import discord4j.core.DiscordClient
 import discord4j.core.event.domain.Event
 import discord4j.core.event.domain.VoiceStateUpdateEvent
@@ -23,9 +21,6 @@ import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactor.mono
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.SchemaUtils
-import org.jetbrains.exposed.sql.transactions.transaction
 import org.koin.core.context.startKoin
 import reactor.core.publisher.Flux
 import java.nio.file.Path
@@ -42,11 +37,8 @@ fun main() = runBlocking<Unit> {
     }
 
     startKoin {
-        modules(mainModule, influxModule, administrationModule)
+        modules(mainModule, influxModule, sqliteModule, administrationModule)
     }
-
-    Database.connect("jdbc:sqlite:./data/data.db", "org.sqlite.JDBC")
-    transaction { SchemaUtils.createMissingTablesAndColumns(Guilds, Channels) }
 
     DiscordClient.create(token).withGateway { client ->
         mono {
