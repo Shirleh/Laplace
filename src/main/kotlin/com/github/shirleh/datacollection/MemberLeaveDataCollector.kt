@@ -1,5 +1,6 @@
 package com.github.shirleh.datacollection
 
+import com.github.shirleh.extensions.orElseNull
 import com.influxdb.client.domain.WritePrecision
 import com.influxdb.client.write.Point
 import discord4j.core.event.domain.guild.MemberLeaveEvent
@@ -12,6 +13,19 @@ import org.koin.core.inject
 import java.time.Duration
 import java.time.Instant
 
+private data class LeaveData(
+    val guildId: String,
+    val membershipDuration: Duration,
+    val isBoosting: Boolean,
+    val leaveTime: Instant
+) {
+    fun toDataPoint() = Point.measurement("member_leave")
+        .addTag("guildId", guildId)
+        .addField("membershipDuration", membershipDuration.seconds)
+        .addField("isBoosting", isBoosting)
+        .time(leaveTime, WritePrecision.S)
+}
+
 object MemberLeaveDataCollector : KoinComponent {
 
     private val logger = KotlinLogging.logger { }
@@ -23,26 +37,25 @@ object MemberLeaveDataCollector : KoinComponent {
      */
     suspend fun collect(events: Flow<MemberLeaveEvent>) {
         events
-            .map(::toDataPoint)
+            .map(MemberLeaveDataCollector::toLeaveData)
+            .map(LeaveData::toDataPoint)
             .collect(dataPointRepository::save)
     }
 
-    private fun toDataPoint(event: MemberLeaveEvent): Point {
+    private fun toLeaveData(event: MemberLeaveEvent): LeaveData {
         logger.entry(event)
 
-        val guildMemberId = event.user.id.asString()
         val guildId = event.guildId.asString()
-        val joinTime = event.member.map { it.joinTime }
-            .orElseThrow { IllegalStateException("Member not present in MemberLeaveEvent?") }
+        val member = event.member.orElseNull() ?: throw IllegalStateException("Member not present in MemberLeaveEvent?")
+        val joinTime = member.joinTime
         val leaveTime = Instant.now()
-        val membershipDuration = Duration.between(joinTime, leaveTime)
 
-        val result = Point.measurement("guildMembership")
-            .addTag("event", "leave")
-            .addTag("guildId", guildId)
-            .addTag("guildMemberId", guildMemberId)
-            .addField("membershipDuration", membershipDuration.seconds)
-            .time(leaveTime, WritePrecision.S)
+        val result = LeaveData(
+            guildId = guildId,
+            membershipDuration = Duration.between(joinTime, leaveTime),
+            isBoosting = member.premiumTime.isPresent,
+            leaveTime = leaveTime
+        )
 
         return logger.exit(result)
     }
