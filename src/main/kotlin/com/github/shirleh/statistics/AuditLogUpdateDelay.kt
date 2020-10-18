@@ -1,4 +1,4 @@
-package com.github.shirleh.datacollection
+package com.github.shirleh.statistics
 
 /**
  * Arbitrary delay to prevent audit log access before it's updated.

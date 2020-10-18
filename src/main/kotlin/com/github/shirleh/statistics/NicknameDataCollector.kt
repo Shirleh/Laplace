@@ -1,4 +1,4 @@
-package com.github.shirleh.datacollection
+package com.github.shirleh.statistics
 
 import com.github.shirleh.extensions.orElseNull
 import com.github.shirleh.persistence.influx.DataPointRepository

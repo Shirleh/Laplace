@@ -1,4 +1,4 @@
-package com.github.shirleh.datacollection
+package com.github.shirleh.statistics
 
 import com.github.shirleh.persistence.influx.DataPointRepository
 import com.influxdb.client.domain.WritePrecision

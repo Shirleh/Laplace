@@ -1,4 +1,4 @@
-package com.github.shirleh.datacollection.emoji
+package com.github.shirleh.statistics.emoji
 
 import com.influxdb.client.domain.WritePrecision
 import com.influxdb.client.write.Point

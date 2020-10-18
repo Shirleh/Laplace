@@ -2,8 +2,8 @@ package com.github.shirleh
 
 import com.github.shirleh.administration.administrationModule
 import com.github.shirleh.command.CommandHandler
-import com.github.shirleh.datacollection.*
-import com.github.shirleh.datacollection.emoji.EmojiDataCollector
+import com.github.shirleh.statistics.*
+import com.github.shirleh.statistics.emoji.EmojiDataCollector
 import com.github.shirleh.persistence.influx.influxModule
 import com.github.shirleh.persistence.sqlite.sqliteModule
 import discord4j.core.DiscordClient
