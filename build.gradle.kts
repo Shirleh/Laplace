@@ -1,14 +1,15 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    application
-    id("com.github.johnrengelman.shadow") version "5.2.0"
     kotlin("jvm") version "1.4.10"
     kotlin("kapt") version "1.4.10"
+    application
+    id("com.github.johnrengelman.shadow") version "5.2.0"
+    id("com.google.cloud.tools.jib") version "2.6.0"
 }
 
 group = "org.github.shirleh"
-version = "1.0-SNAPSHOT"
+version = "0.1"
 
 application {
     mainClassName = "com.github.shirleh.MainKt"
@@ -87,5 +88,18 @@ tasks {
                 )
             )
         }
+    }
+}
+
+jib {
+    from {
+        image = "openjdk:11-jre-slim"
+    }
+    to {
+        image = "laplace"
+        tags = setOf("latest")
+    }
+    container {
+        creationTime = "USE_CURRENT_TIMESTAMP"
     }
 }
