@@ -12,7 +12,7 @@ services:
     depends_on:
       - influxdb
     build: .
-    image: laplace_app
+    image: laplace
     environment:
       DISCORD_TOKEN_FILE: /run/secrets/discord_token
       INFLUX2_URL: http://influxdb:9999
