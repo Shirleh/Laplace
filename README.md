@@ -3,7 +3,7 @@ Laplace is a Discord bot which collects statistics about a server and its users.
 
 ## Getting started
 
-### Installation with Docker
+### Installation
 
 #### Prerequisites
 - [Git](https://git-scm.com)
@@ -16,49 +16,21 @@ git clone https://github.com/Shirleh/Laplace.git
 ```
 - Start an instance of InfluxDB and [set it up](https://v2.docs.influxdata.com/v2.0/get-started/#set-up-influxdb).
 ```shell script
-docker-compose up influxdb
+docker-compose up -d influxdb
 ```
-- Adjust the following properties in [influx2.properties](src/main/resources/influx2.properties) to match your InfluxDB instance.
-```
-influx2.org=YOUR_ORG
-influx2.bucket=YOUR_BUCKET
-influx2.token=YOUR_TOKEN
-```
-- Create `discord_token.txt` inside the project folder containing *just* the token.
-```text
-imaginary_cute_discord_token_inside_a_text_file
-```
-- You're done! You can now start Laplace.
+- Generate a read/write token in the InfluxDB UI and save it inside a file `influx2_token.txt`.
 ```shell script
-docker-compose up
+echo "shy-influx2-token" > influx2_token.txt
 ```
-
-### Installation without Docker
-
-#### Prerequisites
-- [Git](https://git-scm.com)
-- [JDK 11 or higher](https://www.oracle.com/java/technologies/javase-downloads.html)
-- [InfluxDB v2.0 (beta)](https://v2.docs.influxdata.com/v2.0/get-started/)
-
-#### Installation
-- Clone the repository.  
+- Optionally configure [docker-compose.prod.yml](docker-compose.prod.yml) to change default Influx properties.
+- Copy the Discord token from the Discord Developer Portal and save it inside a file `discord_token.txt`.
 ```shell script
-git clone https://github.com/Shirleh/Laplace.git
+echo "promiscuous-discord-token" > discord_token.txt
 ```
-- Run an instance of InfluxDB and set it up.
-- Adjust the following properties in `src/main/resources/influx2.properties` to match your InfluxDB instance.
-```
-influx2.org=YOUR_ORG
-influx2.bucket=YOUR_BUCKET
-influx2.token=YOUR_TOKEN
-```
-- Create `discord_token.txt` inside the project folder containing *just* the token.
-```text
-imaginary_cute_discord_token_inside_a_text_file
-```
-- Run the bot with Gradle.
+- Put the id of the superuser role (e.g. staff role) in [docker-compose.prod.yml](docker-compose.prod.yml).
+- You can now deploy Laplace! :rocket:
 ```shell script
-./gradlew run --console plain
+docker-compose up -d
 ```
 
 ## Contributing
