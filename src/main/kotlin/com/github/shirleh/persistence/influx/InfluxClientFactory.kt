@@ -2,6 +2,8 @@ package com.github.shirleh.persistence.influx
 
 import com.influxdb.client.InfluxDBClient
 import com.influxdb.client.InfluxDBClientFactory
+import com.influxdb.client.kotlin.InfluxDBClientKotlin
+import com.influxdb.client.kotlin.InfluxDBClientKotlinFactory
 import mu.KotlinLogging
 import java.io.File
 
@@ -14,9 +16,13 @@ private data class InfluxProperties(
 
 object InfluxClientFactory {
 
-    private val logger = KotlinLogging.logger { }
-    
-    fun create(config: InfluxConfiguration): InfluxDBClient {
+    fun getKotlinClient(config: InfluxConfiguration): InfluxDBClientKotlin {
+        val (url, token, org, bucket) = readInfluxProperties(config)
+        return InfluxDBClientKotlinFactory.create(url, token, org, bucket)
+
+    }
+
+    fun createClient(config: InfluxConfiguration): InfluxDBClient {
         val (url, token, org, bucket) = readInfluxProperties(config)
         return InfluxDBClientFactory.create(url, token, org, bucket)
     }
@@ -30,6 +36,6 @@ object InfluxClientFactory {
             token = token,
             defaultOrg = config.influxDefaultOrg,
             defaultBucket = config.influxDefaultBucket,
-        ).also { logger.info { "Starting InfluxDB with $it" } }
+        )
     }
 }
