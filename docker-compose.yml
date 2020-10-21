@@ -13,7 +13,7 @@ services:
       - influxdb
     environment:
       DISCORD_TOKEN_FILE: /run/secrets/discord_token
-      INFLUX2_URL: http://influxdb:9999
+      INFLUX2_URL: http://influxdb:8086
       INFLUX2_TOKEN_FILE: /run/secrets/influx2_token
     volumes:
       - sqlite_data:/data
