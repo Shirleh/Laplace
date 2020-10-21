@@ -34,6 +34,7 @@ object NicknameDataCollector : KoinComponent {
      * Collects member nickname data from the incoming [events].
      */
     fun addListener(events: Flow<MemberUpdateEvent>) = events
+        .buffer()
         .onEach { delay(AUDIT_LOG_UPDATE_DELAY) }
         .mapNotNull(::findNicknameChange)
         .onEach { logger.debug { it } }

@@ -32,6 +32,7 @@ object BanDataCollector : KoinComponent {
      * Collects ban data from the incoming [events].
      */
     fun addListener(events: Flow<BanEvent>) = events
+        .buffer()
         .onEach { delay(AUDIT_LOG_UPDATE_DELAY) }
         .mapNotNull(BanDataCollector::findBanAuthorId)
         .map(BanDataCollector::toDataPoint)

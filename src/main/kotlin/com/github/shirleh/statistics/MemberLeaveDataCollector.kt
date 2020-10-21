@@ -35,6 +35,7 @@ object MemberLeaveDataCollector : KoinComponent {
      * Collects member leave data from the incoming [events].
      */
     fun addListener(events: Flow<MemberLeaveEvent>) = events
+        .buffer()
         .mapNotNull(MemberLeaveDataCollector::toLeaveData)
         .map(LeaveData::toDataPoint)
         .onEach { logger.debug { it } }

@@ -33,6 +33,7 @@ object MemberJoinDataCollector : KoinComponent {
      * Collects member join data from the incoming [events].
      */
     fun addListener(events: Flow<MemberJoinEvent>) = events
+        .buffer()
         .filter { event -> !event.member.isBot }
         .map(MemberJoinDataCollector::toJoinData)
         .onEach { logger.debug { it } }
