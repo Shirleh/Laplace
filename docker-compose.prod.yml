@@ -5,6 +5,9 @@ services:
     image: shirleh/laplace
     environment:
       DISCORD_SUPERUSER_ROLE_ID: # {{ required - role id to access administration commands }}
+
       #INFLUX2_ORG: {{ optional - defaults to "laplace" }}
       #INFLUX2_BUCKET: {{ optional - defaults to "raw_discord_data" }}
+      #INFLUX2_LOG_LEVEL: {{ optional - defaults to "NONE" - valid values are NONE, BASIC, HEADERS, BODY }}
+
       #SQLITE_URL: {{ optional - defaults to "./data/data.db }}
