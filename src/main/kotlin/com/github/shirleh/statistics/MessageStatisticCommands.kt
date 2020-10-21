@@ -1,5 +1,8 @@
 package com.github.shirleh.statistics
 
+import com.github.ajalt.clikt.parameters.options.default
+import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.types.long
 import com.github.shirleh.command.cli.AbstractCommand
 import com.github.shirleh.command.cli.AbstractCommandCategory
 import com.github.shirleh.extensions.await
@@ -29,12 +32,14 @@ class ActivityCommand : AbstractCommand(
 
     private val queryApi: QueryKotlinApi by inject()
 
+    private val range by option("-r", "--range", help = "time range in days (1-30); defaults to 1").long().default(1L)
+
     @OptIn(ExperimentalCoroutinesApi::class)
     override suspend fun execute(event: MessageCreateEvent) {
         val guildId = event.guildId.map(Snowflake::asString).orElseNull() ?: return
 
         val flux = Flux.from("raw_discord_data")
-            .range(-1L, ChronoUnit.DAYS)
+            .range(-range, ChronoUnit.DAYS)
             .filter(Restrictions.measurement().equal("message_count"))
             .filter(Restrictions.tag("guildId").equal(guildId))
             .groupBy("channel")
