@@ -5,10 +5,7 @@ import com.github.shirleh.persistence.influx.DataPointRepository
 import com.influxdb.client.domain.WritePrecision
 import com.influxdb.client.write.Point
 import discord4j.core.event.domain.guild.MemberLeaveEvent
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.*
 import mu.KotlinLogging
 import org.koin.core.KoinComponent
 import org.koin.core.inject
@@ -37,12 +34,12 @@ object MemberLeaveDataCollector : KoinComponent {
     /**
      * Collects member leave data from the incoming [events].
      */
-    suspend fun collect(events: Flow<MemberLeaveEvent>) {
-        events
-            .mapNotNull(MemberLeaveDataCollector::toLeaveData)
-            .map(LeaveData::toDataPoint)
-            .collect(dataPointRepository::save)
-    }
+    fun addListener(events: Flow<MemberLeaveEvent>) = events
+        .mapNotNull(MemberLeaveDataCollector::toLeaveData)
+        .map(LeaveData::toDataPoint)
+        .onEach(dataPointRepository::save)
+        .catch { error -> logger.catching(error) }
+
 
     private fun toLeaveData(event: MemberLeaveEvent): LeaveData? {
         logger.entry(event)

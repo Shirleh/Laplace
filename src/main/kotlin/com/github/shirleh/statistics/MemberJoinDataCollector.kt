@@ -4,10 +4,7 @@ import com.github.shirleh.persistence.influx.DataPointRepository
 import com.influxdb.client.domain.WritePrecision
 import com.influxdb.client.write.Point
 import discord4j.core.event.domain.guild.MemberJoinEvent
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 import mu.KotlinLogging
 import org.koin.core.KoinComponent
 import org.koin.core.inject
@@ -35,13 +32,12 @@ object MemberJoinDataCollector : KoinComponent {
     /**
      * Collects member join data from the incoming [events].
      */
-    suspend fun collect(events: Flow<MemberJoinEvent>) {
-        events
-            .filter { event -> !event.member.isBot }
-            .map(MemberJoinDataCollector::toJoinData)
-            .map(JoinData::toDataPoint)
-            .collect(dataPointRepository::save)
-    }
+    fun addListener(events: Flow<MemberJoinEvent>) = events
+        .filter { event -> !event.member.isBot }
+        .map(MemberJoinDataCollector::toJoinData)
+        .map(JoinData::toDataPoint)
+        .onEach(dataPointRepository::save)
+        .catch { error -> logger.catching(error) }
 
     private fun toJoinData(event: MemberJoinEvent): JoinData {
         logger.entry(event)

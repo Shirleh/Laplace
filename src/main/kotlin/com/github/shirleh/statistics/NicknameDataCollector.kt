@@ -33,12 +33,13 @@ object NicknameDataCollector : KoinComponent {
     /**
      * Collects member nickname data from the incoming [events].
      */
-    suspend fun collect(events: Flow<MemberUpdateEvent>) =
-        events
-            .onEach { delay(AUDIT_LOG_UPDATE_DELAY) }
-            .mapNotNull(::findNicknameChange)
-            .map(NicknameChange::toDataPoint)
-            .collect(dataPointRepository::save)
+    fun addListener(events: Flow<MemberUpdateEvent>) = events
+        .onEach { delay(AUDIT_LOG_UPDATE_DELAY) }
+        .mapNotNull(::findNicknameChange)
+        .map(NicknameChange::toDataPoint)
+        .onEach(dataPointRepository::save)
+        .catch { error -> logger.catching(error) }
+
 
     private suspend fun findNicknameChange(event: MemberUpdateEvent): NicknameChange? {
         logger.entry(event)

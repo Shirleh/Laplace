@@ -38,18 +38,17 @@ object MessageDataCollector : KoinComponent {
     /**
      * Collects message data from the incoming [events].
      */
-    suspend fun collect(events: Flow<MessageCreateEvent>) {
-        events
-            .filter { event ->
-                val guildId = event.guildId.map(Snowflake::asLong).orElseNull() ?: return@filter false
-                val channelId = event.message.channelId.asLong()
-                channelRepository.findAll(guildId).contains(channelId)
-            }
-            .filter { event -> event.message.author.map { !it.isBot }.orElse(false) }
-            .mapNotNull(MessageDataCollector::toMessageData)
-            .map(MessageData::toDataPoint)
-            .collect(dataPointRepository::save)
-    }
+    fun addListener(events: Flow<MessageCreateEvent>) = events
+        .filter { event ->
+            val guildId = event.guildId.map(Snowflake::asLong).orElseNull() ?: return@filter false
+            val channelId = event.message.channelId.asLong()
+            channelRepository.findAll(guildId).contains(channelId)
+        }
+        .filter { event -> event.message.author.map { !it.isBot }.orElse(false) }
+        .mapNotNull(MessageDataCollector::toMessageData)
+        .map(MessageData::toDataPoint)
+        .onEach(dataPointRepository::save)
+        .catch { error -> logger.catching(error) }
 
     private fun toMessageData(event: MessageCreateEvent): MessageData? {
         logger.entry(event)

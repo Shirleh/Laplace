@@ -1,17 +1,14 @@
 package com.github.shirleh.statistics.emoji
 
 import com.github.shirleh.administration.ChannelRepository
-import com.github.shirleh.persistence.influx.DataPointRepository
 import com.github.shirleh.extensions.orElseNull
+import com.github.shirleh.persistence.influx.DataPointRepository
 import com.vdurmont.emoji.EmojiParser
 import discord4j.common.util.Snowflake
 import discord4j.core.`object`.reaction.ReactionEmoji
 import discord4j.core.event.domain.message.MessageCreateEvent
 import discord4j.core.event.domain.message.ReactionAddEvent
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 import mu.KotlinLogging
 import org.koin.core.KoinComponent
 import org.koin.core.inject
@@ -29,18 +26,17 @@ object EmojiDataCollector : KoinComponent {
     /**
      * Collects emoji data from the incoming [events].
      */
-    suspend fun collectFromMessages(events: Flow<MessageCreateEvent>) {
-        events
-            .filter { event ->
-                val guildId = event.guildId.map(Snowflake::asLong).orElseNull() ?: return@filter false
-                val channelId = event.message.channelId.asLong()
-                channelRepository.findAll(guildId).contains(channelId)
-            }
-            .filter { event -> event.message.author.map { !it.isBot }.orElse(false) }
-            .map(EmojiDataCollector::parseToEmojis)
-            .map { it.map(Emoji::toDataPoint) }
-            .collect(dataPointRepository::save)
-    }
+    fun addMessageListener(events: Flow<MessageCreateEvent>) = events
+        .filter { event ->
+            val guildId = event.guildId.map(Snowflake::asLong).orElseNull() ?: return@filter false
+            val channelId = event.message.channelId.asLong()
+            channelRepository.findAll(guildId).contains(channelId)
+        }
+        .filter { event -> event.message.author.map { !it.isBot }.orElse(false) }
+        .map { event -> parseToEmojis(event) }
+        .map { emojis -> emojis.map(Emoji::toDataPoint) }
+        .onEach(dataPointRepository::save)
+        .catch { error -> logger.catching(error) }
 
     @OptIn(ExperimentalStdlibApi::class)
     private fun parseToEmojis(event: MessageCreateEvent): List<Emoji> {
@@ -92,24 +88,23 @@ object EmojiDataCollector : KoinComponent {
     /**
      * Collects emoji data from the incoming [events].
      */
-    suspend fun collectFromReactionAdds(events: Flow<ReactionAddEvent>) {
-        events
-            .filter { event ->
-                val guildId = event.guildId.map(Snowflake::asLong).orElseNull() ?: return@filter false
-                val channelId = event.channelId.asLong()
-                channelRepository.findAll(guildId).contains(channelId)
-            }
-            .filter { event -> event.member.map { !it.isBot }.orElse(false) }
-            .map {
-                toEmoji(
-                    reactionEmoji = it.emoji,
-                    guildId = it.guildId.map(Snowflake::asString).orElseThrow(),
-                    channelId = it.channelId.asString()
-                )
-            }
-            .map(Emoji::toDataPoint)
-            .collect(dataPointRepository::save)
-    }
+    fun addReactionListener(events: Flow<ReactionAddEvent>) = events
+        .filter { event ->
+            val guildId = event.guildId.map(Snowflake::asLong).orElseNull() ?: return@filter false
+            val channelId = event.channelId.asLong()
+            channelRepository.findAll(guildId).contains(channelId)
+        }
+        .filter { event -> event.member.map { !it.isBot }.orElse(false) }
+        .map {
+            toEmoji(
+                reactionEmoji = it.emoji,
+                guildId = it.guildId.map(Snowflake::asString).orElseThrow(),
+                channelId = it.channelId.asString()
+            )
+        }
+        .map(Emoji::toDataPoint)
+        .onEach(dataPointRepository::save)
+        .catch { error -> logger.catching(error) }
 
     private fun toEmoji(reactionEmoji: ReactionEmoji, guildId: String, channelId: String): Emoji {
         logger.entry(reactionEmoji, guildId, channelId)
