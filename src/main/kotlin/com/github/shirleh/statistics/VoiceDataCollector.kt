@@ -42,7 +42,7 @@ object VoiceDataCollector : KoinComponent {
     /**
      * Collects voice data from the incoming [events].
      */
-    fun collect(events: Flow<VoiceStateUpdateEvent>) = events
+    fun addListener(events: Flow<VoiceStateUpdateEvent>) = events
         .buffer()
         .map(VoiceDataCollector::toVoiceStateData)
         .onEach { logger.debug { it } }

@@ -72,7 +72,7 @@ fun main() = runBlocking<Unit> {
                 .launchIn(this)
 
             client.on(VoiceStateUpdateEvent::class.java).asFlow()
-                .let(VoiceDataCollector::collect)
+                .let(VoiceDataCollector::addListener)
                 .launchIn(this)
         }
     }.block()
