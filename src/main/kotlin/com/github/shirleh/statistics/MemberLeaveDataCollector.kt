@@ -37,6 +37,7 @@ object MemberLeaveDataCollector : KoinComponent {
     fun addListener(events: Flow<MemberLeaveEvent>) = events
         .mapNotNull(MemberLeaveDataCollector::toLeaveData)
         .map(LeaveData::toDataPoint)
+        .onEach { logger.debug { it } }
         .onEach(dataPointRepository::save)
         .catch { error -> logger.catching(error) }
 

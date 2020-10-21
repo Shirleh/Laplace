@@ -34,6 +34,7 @@ object EmojiDataCollector : KoinComponent {
         }
         .filter { event -> event.message.author.map { !it.isBot }.orElse(false) }
         .map { event -> parseToEmojis(event) }
+        .onEach { logger.debug { "Emojis $it" } }
         .map { emojis -> emojis.map(Emoji::toDataPoint) }
         .onEach(dataPointRepository::save)
         .catch { error -> logger.catching(error) }
@@ -102,8 +103,10 @@ object EmojiDataCollector : KoinComponent {
                 channelId = it.channelId.asString()
             )
         }
+        .onEach { logger.debug { it } }
         .map(Emoji::toDataPoint)
         .onEach(dataPointRepository::save)
+        .onEach { logger.debug { "Saved reaction emoji" } }
         .catch { error -> logger.catching(error) }
 
     private fun toEmoji(reactionEmoji: ReactionEmoji, guildId: String, channelId: String): Emoji {

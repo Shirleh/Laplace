@@ -35,10 +35,10 @@ object BanDataCollector : KoinComponent {
         .onEach { delay(AUDIT_LOG_UPDATE_DELAY) }
         .mapNotNull(BanDataCollector::findBanAuthorId)
         .map(BanDataCollector::toDataPoint)
+        .onEach { logger.debug { it } }
         .map(BanData::toDataPoint)
         .onEach(dataPointRepository::save)
         .catch { error -> logger.catching(error) }
-
 
     private suspend fun findBanAuthorId(event: BanEvent): Snowflake? {
         logger.entry(event)

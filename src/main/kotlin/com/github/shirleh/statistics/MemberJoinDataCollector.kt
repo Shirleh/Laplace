@@ -35,6 +35,7 @@ object MemberJoinDataCollector : KoinComponent {
     fun addListener(events: Flow<MemberJoinEvent>) = events
         .filter { event -> !event.member.isBot }
         .map(MemberJoinDataCollector::toJoinData)
+        .onEach { logger.debug { it } }
         .map(JoinData::toDataPoint)
         .onEach(dataPointRepository::save)
         .catch { error -> logger.catching(error) }
