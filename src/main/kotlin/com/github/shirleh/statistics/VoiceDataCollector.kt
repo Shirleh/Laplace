@@ -6,8 +6,9 @@ import com.influxdb.client.write.Point
 import discord4j.common.util.Snowflake
 import discord4j.core.event.domain.VoiceStateUpdateEvent
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import mu.KotlinLogging
 import org.koin.core.KoinComponent
 import org.koin.core.inject
@@ -44,12 +45,12 @@ object VoiceDataCollector : KoinComponent {
     /**
      * Collects voice data from the incoming [events].
      */
-    suspend fun collect(events: Flow<VoiceStateUpdateEvent>) {
-        events
-            .map(VoiceDataCollector::toVoiceStateData)
-            .map(VoiceStateData::toDataPoint)
-            .collect(dataPointRepository::save)
-    }
+    fun collect(events: Flow<VoiceStateUpdateEvent>) = events
+        .map(VoiceDataCollector::toVoiceStateData)
+        .map(VoiceStateData::toDataPoint)
+        .onEach(dataPointRepository::save)
+        .catch { error -> logger.catching(error) }
+
 
     private fun toVoiceStateData(event: VoiceStateUpdateEvent): VoiceStateData {
         logger.entry(event)

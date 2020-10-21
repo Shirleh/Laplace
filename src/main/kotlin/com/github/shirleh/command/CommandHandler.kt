@@ -4,35 +4,41 @@ import arrow.core.Either
 import com.github.shirleh.command.cli.CliMessage
 import com.github.shirleh.command.cli.laplaceCli
 import com.github.shirleh.extensions.await
-import discord4j.core.`object`.entity.Message
 import discord4j.core.event.domain.message.MessageCreateEvent
 import discord4j.core.spec.EmbedCreateSpec
 import discord4j.rest.util.Color
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.onEach
+import mu.KotlinLogging
 
 object CommandHandler {
+
+    private val logger = KotlinLogging.logger { }
 
     /**
      * Listens to incoming [MessageCreateEvent]s and execute the containing command.
      */
-    suspend fun executeCommands(flow: Flow<MessageCreateEvent>) = flow
-        .filter { it.message.hasHumanAuthor() }
-        .filter { it.message.containsPrefix("""<@!${it.client.selfId.asString()}>""") }
-        .collect {
-            when (val parseResult = laplaceCli().parse(it.message.content)) {
-                is Either.Left -> {
-                    val channel = it.message.channel.await()
-                    channel.createEmbed { spec -> messageSpec(spec, parseResult.a) }.await()
-                }
-                is Either.Right -> parseResult.b.execute(it)
+    fun addListener(events: Flow<MessageCreateEvent>) = events
+        .filter { event -> event.message.content.startsWith("""<@!${event.client.selfId.asString()}>""") }
+        .filter { event -> event.message.author.map { !it.isBot }.orElse(false) }
+        .onEach { event -> executeCommand(event) }
+        .catch { error -> logger.catching(error) }
+
+    private suspend fun executeCommand(event: MessageCreateEvent) {
+        logger.entry(event)
+
+        when (val parseResult = laplaceCli().parse(event.message.content)) {
+            is Either.Left -> {
+                val channel = event.message.channel.await()
+                channel.createEmbed { spec -> messageSpec(spec, parseResult.a) }.await()
             }
+            is Either.Right -> parseResult.b.execute(event)
         }
 
-    private fun Message.hasHumanAuthor(): Boolean = author.map { !it.isBot }.orElse(false)
-
-    private fun Message.containsPrefix(prefix: String) = content.startsWith(prefix)
+        logger.exit()
+    }
 
     private fun messageSpec(spec: EmbedCreateSpec, e: CliMessage) = spec
         .setColor(if (e.error) Color.RED else Color.WHITE)

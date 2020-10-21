@@ -31,13 +31,14 @@ object BanDataCollector : KoinComponent {
     /**
      * Collects ban data from the incoming [events].
      */
-    suspend fun collect(events: Flow<BanEvent>) =
-        events
-            .onEach { delay(AUDIT_LOG_UPDATE_DELAY) }
-            .mapNotNull(BanDataCollector::findBanAuthorId)
-            .map(BanDataCollector::toDataPoint)
-            .map(BanData::toDataPoint)
-            .collect(dataPointRepository::save)
+    fun addListener(events: Flow<BanEvent>) = events
+        .onEach { delay(AUDIT_LOG_UPDATE_DELAY) }
+        .mapNotNull(BanDataCollector::findBanAuthorId)
+        .map(BanDataCollector::toDataPoint)
+        .map(BanData::toDataPoint)
+        .onEach(dataPointRepository::save)
+        .catch { error -> logger.catching(error) }
+
 
     private suspend fun findBanAuthorId(event: BanEvent): Snowflake? {
         logger.entry(event)

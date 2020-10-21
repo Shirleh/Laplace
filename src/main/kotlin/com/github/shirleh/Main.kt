@@ -2,12 +2,11 @@ package com.github.shirleh
 
 import com.github.shirleh.administration.administrationModule
 import com.github.shirleh.command.CommandHandler
-import com.github.shirleh.statistics.*
-import com.github.shirleh.statistics.emoji.EmojiDataCollector
 import com.github.shirleh.persistence.influx.influxModule
 import com.github.shirleh.persistence.sqlite.sqliteModule
+import com.github.shirleh.statistics.*
+import com.github.shirleh.statistics.emoji.EmojiDataCollector
 import discord4j.core.DiscordClient
-import discord4j.core.event.domain.Event
 import discord4j.core.event.domain.VoiceStateUpdateEvent
 import discord4j.core.event.domain.guild.BanEvent
 import discord4j.core.event.domain.guild.MemberJoinEvent
@@ -15,14 +14,12 @@ import discord4j.core.event.domain.guild.MemberLeaveEvent
 import discord4j.core.event.domain.guild.MemberUpdateEvent
 import discord4j.core.event.domain.message.MessageCreateEvent
 import discord4j.core.event.domain.message.ReactionAddEvent
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactor.mono
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import org.koin.core.context.startKoin
-import reactor.core.publisher.Flux
 import java.nio.file.Path
 import java.util.*
 import kotlin.system.exitProcess
@@ -42,19 +39,41 @@ fun main() = runBlocking<Unit> {
 
     DiscordClient.create(token).withGateway { client ->
         mono {
-            launch { client.on(MessageCreateEvent::class.java).addListener(CommandHandler::executeCommands) }
+            client.on(MessageCreateEvent::class.java).asFlow()
+                .let(CommandHandler::addListener)
+                .launchIn(this)
 
-            launch { client.on(MessageCreateEvent::class.java).addListener(MessageDataCollector::collect) }
+            client.on(MessageCreateEvent::class.java).asFlow()
+                .let(MessageDataCollector::addListener)
+                .launchIn(this)
 
-            launch { client.on(MessageCreateEvent::class.java).addListener(EmojiDataCollector::collectFromMessages) }
-            launch { client.on(ReactionAddEvent::class.java).addListener(EmojiDataCollector::collectFromReactionAdds) }
+            client.on(MessageCreateEvent::class.java).asFlow()
+                .let(EmojiDataCollector::addMessageListener)
+                .launchIn(this)
 
-            launch { client.on(MemberJoinEvent::class.java).addListener(MemberJoinDataCollector::collect) }
-            launch { client.on(MemberLeaveEvent::class.java).addListener(MemberLeaveDataCollector::collect) }
-            launch { client.on(MemberUpdateEvent::class.java).addListener(NicknameDataCollector::collect) }
-            launch { client.on(BanEvent::class.java).addListener(BanDataCollector::collect) }
+            client.on(ReactionAddEvent::class.java).asFlow()
+                .let(EmojiDataCollector::addReactionListener)
+                .launchIn(this)
 
-            launch { client.on(VoiceStateUpdateEvent::class.java).addListener(VoiceDataCollector::collect) }
+            client.on(MemberJoinEvent::class.java).asFlow()
+                .let(MemberJoinDataCollector::addListener)
+                .launchIn(this)
+
+            client.on(MemberLeaveEvent::class.java).asFlow()
+                .let(MemberLeaveDataCollector::addListener)
+                .launchIn(this)
+
+            client.on(MemberUpdateEvent::class.java).asFlow()
+                .let(NicknameDataCollector::addListener)
+                .launchIn(this)
+
+            client.on(BanEvent::class.java).asFlow()
+                .let(BanDataCollector::addListener)
+                .launchIn(this)
+
+            client.on(VoiceStateUpdateEvent::class.java).asFlow()
+                .let(VoiceDataCollector::collect)
+                .launchIn(this)
         }
     }.block()
 }
@@ -68,5 +87,3 @@ private fun getToken(): String? {
 
     return result.also { logger.exit(it) }
 }
-
-private suspend fun <E : Event> Flux<E>.addListener(listener: suspend (Flow<E>) -> Unit) = listener.invoke(asFlow())
