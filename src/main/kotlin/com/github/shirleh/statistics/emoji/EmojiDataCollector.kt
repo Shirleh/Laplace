@@ -109,7 +109,6 @@ object EmojiDataCollector : KoinComponent {
         .onEach { logger.debug { it } }
         .map(Emoji::toDataPoint)
         .onEach(dataPointRepository::save)
-        .onEach { logger.debug { "Saved reaction emoji" } }
         .catch { error -> logger.catching(error) }
 
     private fun toEmoji(reactionEmoji: ReactionEmoji, guildId: String, channelId: String): Emoji {
