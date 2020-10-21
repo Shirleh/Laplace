@@ -36,6 +36,7 @@ object NicknameDataCollector : KoinComponent {
     fun addListener(events: Flow<MemberUpdateEvent>) = events
         .onEach { delay(AUDIT_LOG_UPDATE_DELAY) }
         .mapNotNull(::findNicknameChange)
+        .onEach { logger.debug { it } }
         .map(NicknameChange::toDataPoint)
         .onEach(dataPointRepository::save)
         .catch { error -> logger.catching(error) }

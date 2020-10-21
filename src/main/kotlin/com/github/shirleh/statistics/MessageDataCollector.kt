@@ -46,6 +46,7 @@ object MessageDataCollector : KoinComponent {
         }
         .filter { event -> event.message.author.map { !it.isBot }.orElse(false) }
         .mapNotNull(MessageDataCollector::toMessageData)
+        .onEach { logger.debug { it } }
         .map(MessageData::toDataPoint)
         .onEach(dataPointRepository::save)
         .catch { error -> logger.catching(error) }

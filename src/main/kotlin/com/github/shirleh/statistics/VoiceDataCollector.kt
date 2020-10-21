@@ -47,10 +47,10 @@ object VoiceDataCollector : KoinComponent {
      */
     fun collect(events: Flow<VoiceStateUpdateEvent>) = events
         .map(VoiceDataCollector::toVoiceStateData)
+        .onEach { logger.debug { it } }
         .map(VoiceStateData::toDataPoint)
         .onEach(dataPointRepository::save)
         .catch { error -> logger.catching(error) }
-
 
     private fun toVoiceStateData(event: VoiceStateUpdateEvent): VoiceStateData {
         logger.entry(event)
