@@ -35,6 +35,7 @@ object EmojiDataCollector : KoinComponent {
         }
         .filter { event -> event.message.author.map { !it.isBot }.orElse(false) }
         .map { event -> parseToEmojis(event) }
+        .filter(List<Emoji>::isNotEmpty)
         .onEach { logger.debug { "Emojis $it" } }
         .map { emojis -> emojis.map(Emoji::toDataPoint) }
         .onEach(dataPointRepository::save)
