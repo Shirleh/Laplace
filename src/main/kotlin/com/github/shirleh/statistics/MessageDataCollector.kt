@@ -39,6 +39,7 @@ object MessageDataCollector : KoinComponent {
      * Collects message data from the incoming [events].
      */
     fun addListener(events: Flow<MessageCreateEvent>) = events
+        .buffer()
         .filter { event ->
             val guildId = event.guildId.map(Snowflake::asLong).orElseNull() ?: return@filter false
             val channelId = event.message.channelId.asLong()

@@ -27,6 +27,7 @@ object EmojiDataCollector : KoinComponent {
      * Collects emoji data from the incoming [events].
      */
     fun addMessageListener(events: Flow<MessageCreateEvent>) = events
+        .buffer()
         .filter { event ->
             val guildId = event.guildId.map(Snowflake::asLong).orElseNull() ?: return@filter false
             val channelId = event.message.channelId.asLong()
@@ -90,6 +91,7 @@ object EmojiDataCollector : KoinComponent {
      * Collects emoji data from the incoming [events].
      */
     fun addReactionListener(events: Flow<ReactionAddEvent>) = events
+        .buffer()
         .filter { event ->
             val guildId = event.guildId.map(Snowflake::asLong).orElseNull() ?: return@filter false
             val channelId = event.channelId.asLong()

@@ -7,10 +7,7 @@ import com.github.shirleh.extensions.await
 import discord4j.core.event.domain.message.MessageCreateEvent
 import discord4j.core.spec.EmbedCreateSpec
 import discord4j.rest.util.Color
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.*
 import mu.KotlinLogging
 
 object CommandHandler {
@@ -21,6 +18,7 @@ object CommandHandler {
      * Listens to incoming [MessageCreateEvent]s and execute the containing command.
      */
     fun addListener(events: Flow<MessageCreateEvent>) = events
+        .buffer()
         .filter { event -> event.message.content.startsWith("""<@!${event.client.selfId.asString()}>""") }
         .filter { event -> event.message.author.map { !it.isBot }.orElse(false) }
         .onEach { event -> executeCommand(event) }
