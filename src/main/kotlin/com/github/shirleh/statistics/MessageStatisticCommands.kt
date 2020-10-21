@@ -48,19 +48,23 @@ class ActivityCommand : AbstractCommand(
             .sort(true)
             .limit(10)
         val topChannels = flux.toString().also { logger.debug { "Query: $it" } }
-        val results = queryApi.query(topChannels)
+        val fluxRecords = queryApi.query(topChannels)
 
         val channel = event.message.channel.await()
-        val message = StringBuilder()
-            .apply {
-                results.consumeEach {
-                    appendLine("Channel: ${it.getValueByKey("channel")} count: ${it.value}")
-                }
+        val results = mutableMapOf<String, Long>().apply {
+            fluxRecords.consumeEach {
+                val channelId = "<#${it.getValueByKey("channel")}>"
+                val count = it.value as Long
+                put(channelId, count)
             }
-            .toString()
+        }
         channel
             .createEmbed { spec ->
-                spec.setDescription(message)
+                val channelList = results.keys.fold(StringBuilder()) { acc, s -> acc.appendLine(s) }.toString()
+                val countList = results.values.fold(StringBuilder()) { acc, l -> acc.appendLine(l) }.toString()
+
+                spec.addField("Channel", channelList, true)
+                    .addField("Messages", countList, true)
                     .setColor(Color.WHITE)
             }
             .await()
