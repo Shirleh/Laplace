@@ -49,6 +49,7 @@ object NicknameDataCollector : KoinComponent {
         val result = event.guild.awaitSingle()
             .getAuditLog { spec -> spec.setActionType(ActionType.MEMBER_UPDATE) }
             .asFlow()
+            .take(10)
             .mapNotNull { auditLogEntry ->
                 auditLogEntry
                     .getChange(ChangeKey.USER_NICK)
