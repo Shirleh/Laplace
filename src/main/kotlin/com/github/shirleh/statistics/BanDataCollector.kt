@@ -47,6 +47,7 @@ object BanDataCollector : KoinComponent {
         val result = event.guild.awaitSingle()
             .getAuditLog { spec -> spec.setActionType(ActionType.MEMBER_BAN_ADD) }
             .asFlow()
+            .take(10)
             .filter { auditLogEntry -> auditLogEntry.targetId.orElse(null) == event.user.id }
             .map { auditLogEntry -> auditLogEntry.responsibleUserId }
             .firstOrNull()
