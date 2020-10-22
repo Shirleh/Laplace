@@ -6,6 +6,7 @@ import com.github.shirleh.persistence.influx.influxModule
 import com.github.shirleh.persistence.sqlite.sqliteModule
 import com.github.shirleh.statistics.*
 import com.github.shirleh.statistics.emoji.EmojiDataCollector
+import com.github.shirleh.statistics.message.MessageDataCollector
 import discord4j.core.DiscordClient
 import discord4j.core.event.domain.VoiceStateUpdateEvent
 import discord4j.core.event.domain.guild.BanEvent
