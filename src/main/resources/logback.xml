@@ -25,7 +25,12 @@
         <appender-ref ref="CONSOLE"/>
     </root>
 
-<!--    <logger name="com.github.shirleh" level="TRACE">-->
-<!--        <appender-ref ref="FLOW"/>-->
-<!--    </logger>-->
+    <!--    <logger name="com.github.shirleh" level="DEBUG"/>-->
+    <!--    <logger name="com.github.shirleh" level="TRACE">-->
+    <!--        <appender-ref ref="FLOW"/>-->
+    <!--    </logger>-->
+
+    <logger name="discord4j.gateway.protocol.receiver" level="TRACE"/>
+    <logger name="discord4j.core.events" level="TRACE"/>
+    <logger name="discord4j.rest.request" level="DEBUG"/>
 </configuration>
