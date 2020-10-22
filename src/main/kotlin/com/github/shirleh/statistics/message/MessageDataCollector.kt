@@ -1,4 +1,4 @@
-package com.github.shirleh.statistics
+package com.github.shirleh.statistics.message
 
 import com.github.shirleh.administration.ChannelRepository
 import com.github.shirleh.extensions.orElseNull

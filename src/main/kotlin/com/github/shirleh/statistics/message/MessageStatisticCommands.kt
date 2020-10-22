@@ -1,4 +1,4 @@
-package com.github.shirleh.statistics
+package com.github.shirleh.statistics.message
 
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
