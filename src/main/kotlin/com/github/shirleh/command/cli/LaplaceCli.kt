@@ -5,8 +5,8 @@ import com.github.shirleh.administration.*
 import com.github.shirleh.healthcheck.HealthCheck
 import com.github.shirleh.healthcheck.PingCommand
 import com.github.shirleh.healthcheck.UptimeCommand
-import com.github.shirleh.statistics.ActivityCommand
-import com.github.shirleh.statistics.MessageStatistic
+import com.github.shirleh.statistics.message.ActivityCommand
+import com.github.shirleh.statistics.message.MessageStatistic
 import discord4j.core.event.domain.message.MessageCreateEvent
 
 internal class Laplace : AbstractCommand(name = "@Laplace") {
