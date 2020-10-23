@@ -26,13 +26,6 @@ class ChannelRepositoryImpl : ChannelRepository {
 
     override suspend fun save(channelId: Long, guildId: Long) {
         newSuspendedTransaction {
-            suspendedTransaction {
-                val count = Guilds.select { Guilds.id eq guildId }.count()
-                if (count == 0L) {
-                    Guilds.insert { it[id] = guildId }
-                }
-            }
-
             Channels.insert {
                 it[id] = channelId
                 it[guild] = guildId
