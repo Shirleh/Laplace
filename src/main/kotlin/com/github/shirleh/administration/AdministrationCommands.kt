@@ -2,6 +2,8 @@ package com.github.shirleh.administration
 
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.multiple
+import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.options.split
 import com.github.shirleh.command.cli.AbstractCommand
 import com.github.shirleh.command.cli.AbstractCommandCategory
 import com.github.shirleh.extensions.await
@@ -34,12 +36,16 @@ class ListChannelsCommand : AbstractCommand(
     private val config: AdministrationConfiguration by inject()
     private val channelRepository: ChannelRepository by inject()
 
+    private val channelFilter by option("-f", "--filter").split(",")
+
     override suspend fun execute(event: MessageCreateEvent) {
         event.member.filter { it.hasPermission(config) }.orElseNull() ?: return
         val guildId = event.guildId.map(Snowflake::asLong).orElseNull() ?: return
 
-        val result = channelRepository.findAll(guildId)
-            .map { "<#$it>" }
+        val channels =
+            if (channelFilter == null) channelRepository.findAll(guildId)
+            else channelRepository.findByIdIn(channelFilter!!.mapNotNull(String::toChannelId))
+        val result = channels.map { "<#$it>" }
 
         val channel = event.message.channel.await()
         channel.createEmbed { spec ->
