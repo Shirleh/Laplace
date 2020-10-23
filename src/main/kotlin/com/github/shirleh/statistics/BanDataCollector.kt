@@ -19,7 +19,7 @@ private data class BanData(val author: String, val count: Long = 1L) {
     fun toDataPoint() = Point.measurement("ban")
         .addTag("author", author)
         .addField("count", 1)
-        .time(Instant.now(), WritePrecision.S)
+        .time(Instant.now(), WritePrecision.MS)
 }
 
 object BanDataCollector : KoinComponent {

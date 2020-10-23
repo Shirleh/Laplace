@@ -30,7 +30,7 @@ private data class VoiceStateData(
         .addField("isSelfMuted", isSelfMuted)
         .addField("isDeafened", isDeafened)
         .addField("isSelfDeafened", isSelfDeafened)
-        .time(Instant.now(), WritePrecision.S)
+        .time(Instant.now(), WritePrecision.MS)
 }
 
 object VoiceDataCollector : KoinComponent {

@@ -21,7 +21,7 @@ private data class NicknameChange(val author: String, val oldNickname: String, v
         .addTag("author", author)
         .addField("oldNickname", oldNickname)
         .addField("currentNickname", newNickname)
-        .time(Instant.now(), WritePrecision.S)
+        .time(Instant.now(), WritePrecision.MS)
 }
 
 object NicknameDataCollector : KoinComponent {
