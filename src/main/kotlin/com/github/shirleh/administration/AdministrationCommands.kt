@@ -2,12 +2,12 @@ package com.github.shirleh.administration
 
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.multiple
-import com.github.ajalt.clikt.parameters.types.long
 import com.github.shirleh.command.cli.AbstractCommand
 import com.github.shirleh.command.cli.AbstractCommandCategory
 import com.github.shirleh.extensions.await
 import com.github.shirleh.extensions.orElseNull
 import discord4j.common.util.Snowflake
+import discord4j.core.`object`.entity.Member
 import discord4j.core.`object`.reaction.ReactionEmoji
 import discord4j.core.event.domain.message.MessageCreateEvent
 import discord4j.rest.util.Color
@@ -35,10 +35,7 @@ class ListChannelsCommand : AbstractCommand(
     private val channelRepository: ChannelRepository by inject()
 
     override suspend fun execute(event: MessageCreateEvent) {
-        val member = event.member.orElseNull() ?: return
-        val superuserRoleId = Snowflake.of(config.superuserRoleId)
-        if (!member.roleIds.contains(superuserRoleId)) return
-
+        event.member.filter { it.hasPermission(config) }.orElseNull() ?: return
         val guildId = event.guildId.map(Snowflake::asLong).orElseNull() ?: return
 
         val result = channelRepository.findAll(guildId)
@@ -63,14 +60,10 @@ class AddChannelCommand : AbstractCommand(
     private val channelMentions by argument().multiple()
 
     override suspend fun execute(event: MessageCreateEvent) {
-        val member = event.member.orElseNull() ?: return
-        val superuserRoleId = Snowflake.of(config.superuserRoleId)
-        if (!member.roleIds.contains(superuserRoleId)) return
+        event.member.filter { it.hasPermission(config) }.orElseNull() ?: return
         val guildId = event.guildId.map(Snowflake::asLong).orElseNull() ?: return
 
-        val channelIds = channelMentions
-            .mapNotNull { it.removePrefix("<#").removeSuffix(">").toLongOrNull() }
-            .toSet()
+        val channelIds = channelMentions.mapNotNull(String::toChannelId).toSet()
         channelRepository.save(channelIds, guildId)
 
         event.message.addReaction(ReactionEmoji.unicode(OK_HAND_EMOJI)).await()
@@ -87,10 +80,7 @@ class RemoveChannelCommand : AbstractCommand(
     private val channelMentions by argument().multiple()
 
     override suspend fun execute(event: MessageCreateEvent) {
-        val member = event.member.orElseNull() ?: return
-        val superuserRoleId = Snowflake.of(config.superuserRoleId)
-        if (!member.roleIds.contains(superuserRoleId)) return
-
+        event.member.filter { it.hasPermission(config) }.orElseNull() ?: return
         val guildId = event.guildId.map(Snowflake::asLong).orElseNull() ?: return
 
         val channelIds = channelMentions.mapNotNull(String::toChannelId).toSet()
@@ -99,3 +89,8 @@ class RemoveChannelCommand : AbstractCommand(
         event.message.addReaction(ReactionEmoji.unicode(OK_HAND_EMOJI)).await()
     }
 }
+
+private fun Member.hasPermission(config: AdministrationConfiguration) =
+    roleIds.contains(Snowflake.of(config.superuserRoleId))
+
+private fun String.toChannelId() = removePrefix("<#").removeSuffix(">").toLongOrNull()
