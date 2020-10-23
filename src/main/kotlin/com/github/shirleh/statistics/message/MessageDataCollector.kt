@@ -17,14 +17,16 @@ private data class MessageData(
     val guildId: String,
     val channelId: String,
     val authorId: String,
-    val count: Long,
+    val length: Int,
+    val wordCount: Int,
     val timestamp: Instant
 ) {
     fun toDataPoint() = Point.measurement("message_count")
         .addTag("guildId", guildId)
         .addTag("channel", channelId)
         .addTag("author", authorId)
-        .addField("count", count)
+        .addField("length", length)
+        .addField("wordCount", wordCount)
         .time(timestamp, WritePrecision.MS)
 }
 
@@ -65,7 +67,8 @@ object MessageDataCollector : KoinComponent {
             guildId = guildId,
             channelId = channelId,
             authorId = authorId,
-            count = 1L,
+            length = message.content.length,
+            wordCount = message.content.split(" ").size,
             timestamp = timestamp
         )
 
