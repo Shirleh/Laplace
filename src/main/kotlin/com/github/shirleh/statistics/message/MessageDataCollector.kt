@@ -21,7 +21,7 @@ private data class MessageData(
     val wordCount: Int,
     val timestamp: Instant
 ) {
-    fun toDataPoint() = Point.measurement("message_count")
+    fun toDataPoint() = Point.measurement("message")
         .addTag("guildId", guildId)
         .addTag("channel", channelId)
         .addTag("author", authorId)
