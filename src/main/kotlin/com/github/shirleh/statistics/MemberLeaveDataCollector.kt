@@ -22,7 +22,7 @@ private data class LeaveData(
         .addTag("guildId", guildId)
         .addField("membershipDuration", membershipDuration.seconds)
         .addField("isBoosting", isBoosting)
-        .time(leaveTime, WritePrecision.S)
+        .time(leaveTime, WritePrecision.MS)
 }
 
 object MemberLeaveDataCollector : KoinComponent {

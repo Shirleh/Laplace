@@ -22,5 +22,5 @@ internal data class Emoji(
             .addTag("source", source.name)
             .addTag("type", type.name)
             .addField("id", value)
-            .time(Instant.now(), WritePrecision.S)
+            .time(Instant.now(), WritePrecision.MS)
 }

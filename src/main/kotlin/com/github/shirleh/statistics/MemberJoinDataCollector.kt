@@ -20,7 +20,7 @@ private data class JoinData(
         .addTag("guildId", guildId)
         .addField("creationDate", creationDate.epochSecond)
         .addField("isBoosting", isBoosting)
-        .time(joinTime, WritePrecision.S)
+        .time(joinTime, WritePrecision.MS)
 }
 
 object MemberJoinDataCollector : KoinComponent {

@@ -25,7 +25,7 @@ private data class MessageData(
         .addTag("channel", channelId)
         .addTag("author", authorId)
         .addField("count", count)
-        .time(timestamp, WritePrecision.S)
+        .time(timestamp, WritePrecision.MS)
 }
 
 object MessageDataCollector : KoinComponent {
