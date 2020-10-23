@@ -16,11 +16,15 @@ import org.koin.core.KoinComponent
 import org.koin.core.inject
 import java.time.Instant
 
-private data class NicknameChange(val author: String, val oldNickname: String, val newNickname: String) {
+private data class NicknameChange(
+    val author: String,
+    val newNickname: String,
+    val hadNickname: Boolean,
+) {
     fun toDataPoint() = Point.measurement("nickname")
         .addTag("author", author)
-        .addField("oldNickname", oldNickname)
-        .addField("currentNickname", newNickname)
+        .addField("nickname", newNickname)
+        .addField("hadNickname", hadNickname)
         .time(Instant.now(), WritePrecision.MS)
 }
 
@@ -56,8 +60,8 @@ object NicknameDataCollector : KoinComponent {
                     .map {
                         NicknameChange(
                             author = auditLogEntry.responsibleUserId.asString(),
-                            oldNickname = it.oldValue.orElse(""),
-                            newNickname = it.currentValue.orElse("")
+                            newNickname = it.currentValue.orElse(""),
+                            hadNickname = it.oldValue.isPresent,
                         )
                     }
                     .orElseNull()
