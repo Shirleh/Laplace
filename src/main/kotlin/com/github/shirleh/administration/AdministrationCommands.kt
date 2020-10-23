@@ -22,16 +22,12 @@ class Channel : AbstractCommandCategory(
     help = """Manage channels.
         
     Configure which channels Laplace will collect its message-driven statistics from."""
-) {
-    override fun aliases(): Map<String, List<String>> = mapOf(
-        "ls" to listOf("list")
-    )
-}
+)
 
 private const val OK_HAND_EMOJI = "\uD83D\uDC4C"
 
 class ListChannelsCommand : AbstractCommand(
-    name = "list",
+    name = "ls",
     help = """Lists all channels."""
 ) {
     private val config: AdministrationConfiguration by inject()
@@ -56,7 +52,7 @@ class ListChannelsCommand : AbstractCommand(
     }
 }
 
-class AddChannelCommand : AbstractCommand(
+class AddChannelCommand : AbstractCommand( // TODO support list of channel mentions
     name = "add",
     help = """Adds a channel."""
 ) {
@@ -77,8 +73,8 @@ class AddChannelCommand : AbstractCommand(
     }
 }
 
-class RemoveChannelCommand : AbstractCommand(
-    name = "remove",
+class RemoveChannelCommand : AbstractCommand( // TODO support list of channel mentions
+    name = "rm",
     help = """Removes a channel."""
 ) {
     private val config: AdministrationConfiguration by inject()
