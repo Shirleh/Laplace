@@ -1,11 +1,11 @@
 package com.github.shirleh.administration
 
 import kotlinx.coroutines.Dispatchers
+import org.jetbrains.exposed.sql.batchInsert
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
-import org.jetbrains.exposed.sql.transactions.experimental.suspendedTransaction
 import java.util.concurrent.ConcurrentHashMap
 
 class ChannelRepositoryImpl : ChannelRepository {
@@ -44,6 +44,19 @@ class ChannelRepositoryImpl : ChannelRepository {
         _cache[guildId] = channels
     }
 
+    override suspend fun save(channelIds: Set<Long>, guildId: Long) {
+        newSuspendedTransaction {
+            Channels.batchInsert(channelIds, shouldReturnGeneratedValues = false) { channelId ->
+                this[Channels.id] = channelId
+                this[Channels.guild] = guildId
+            }
+        }
+
+        val channels = _cache[guildId] ?: return
+        channels.addAll(channelIds)
+        _cache[guildId] = channels
+    }
+
     override suspend fun delete(channelId: Long, guildId: Long) {
         newSuspendedTransaction {
             Channels.deleteWhere { Channels.id eq channelId }
@@ -51,6 +64,18 @@ class ChannelRepositoryImpl : ChannelRepository {
 
         val channels = _cache[guildId] ?: return
         channels.remove(channelId)
+        _cache[guildId] = channels
+    }
+
+    override suspend fun delete(channelIds: Set<Long>, guildId: Long) {
+        newSuspendedTransaction {
+            channelIds.forEach { channelId ->
+                Channels.deleteWhere { Channels.id eq channelId }
+            }
+        }
+
+        val channels = _cache[guildId] ?: return
+        channels.removeAll(channelIds)
         _cache[guildId] = channels
     }
 }
