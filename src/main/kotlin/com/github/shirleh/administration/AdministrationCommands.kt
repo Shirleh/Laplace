@@ -1,6 +1,7 @@
 package com.github.shirleh.administration
 
 import com.github.ajalt.clikt.parameters.arguments.argument
+import com.github.ajalt.clikt.parameters.arguments.multiple
 import com.github.ajalt.clikt.parameters.types.long
 import com.github.shirleh.command.cli.AbstractCommand
 import com.github.shirleh.command.cli.AbstractCommandCategory
@@ -52,35 +53,38 @@ class ListChannelsCommand : AbstractCommand(
     }
 }
 
-class AddChannelCommand : AbstractCommand( // TODO support list of channel mentions
+class AddChannelCommand : AbstractCommand(
     name = "add",
     help = """Adds a channel."""
 ) {
     private val config: AdministrationConfiguration by inject()
     private val channelRepository: ChannelRepository by inject()
 
-    private val channelId by argument().long()
+    private val channelMentions by argument().multiple()
 
     override suspend fun execute(event: MessageCreateEvent) {
         val member = event.member.orElseNull() ?: return
         val superuserRoleId = Snowflake.of(config.superuserRoleId)
         if (!member.roleIds.contains(superuserRoleId)) return
-
         val guildId = event.guildId.map(Snowflake::asLong).orElseNull() ?: return
-        channelRepository.save(channelId, guildId)
+
+        val channelIds = channelMentions
+            .mapNotNull { it.removePrefix("<#").removeSuffix(">").toLongOrNull() }
+            .toSet()
+        channelRepository.save(channelIds, guildId)
 
         event.message.addReaction(ReactionEmoji.unicode(OK_HAND_EMOJI)).await()
     }
 }
 
-class RemoveChannelCommand : AbstractCommand( // TODO support list of channel mentions
+class RemoveChannelCommand : AbstractCommand(
     name = "rm",
     help = """Removes a channel."""
 ) {
     private val config: AdministrationConfiguration by inject()
     private val channelRepository: ChannelRepository by inject()
 
-    private val channelId by argument().long()
+    private val channelMentions by argument().multiple()
 
     override suspend fun execute(event: MessageCreateEvent) {
         val member = event.member.orElseNull() ?: return
@@ -88,7 +92,9 @@ class RemoveChannelCommand : AbstractCommand( // TODO support list of channel me
         if (!member.roleIds.contains(superuserRoleId)) return
 
         val guildId = event.guildId.map(Snowflake::asLong).orElseNull() ?: return
-        channelRepository.delete(channelId, guildId)
+
+        val channelIds = channelMentions.mapNotNull(String::toChannelId).toSet()
+        channelRepository.delete(channelIds, guildId)
 
         event.message.addReaction(ReactionEmoji.unicode(OK_HAND_EMOJI)).await()
     }
