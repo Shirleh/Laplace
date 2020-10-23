@@ -12,6 +12,16 @@ class ChannelRepositoryImpl : ChannelRepository {
 
     private val _cache: MutableMap<Long, MutableSet<Long>> = ConcurrentHashMap()
 
+    override suspend fun findByIdIn(ids: Collection<Long>): Set<Long> {
+        if (ids.isEmpty()) return emptySet()
+
+        return newSuspendedTransaction {
+            Channels.select { Channels.id inList ids }
+                .map { it[Channels.id] }
+                .toSet()
+        }
+    }
+
     override suspend fun findAll(guildId: Long): Set<Long> = _cache[guildId] ?: run { populateCache(guildId) }
 
     private suspend fun populateCache(guildId: Long): MutableSet<Long> {
