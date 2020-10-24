@@ -4,7 +4,7 @@ import kotlinx.coroutines.Dispatchers
 import mu.KotlinLogging
 import org.jetbrains.exposed.sql.batchInsert
 import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.insertIgnore
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.util.concurrent.ConcurrentHashMap
@@ -43,7 +43,7 @@ class ChannelRepositoryImpl : ChannelRepository {
         logger.entry(channelId, guildId)
 
         newSuspendedTransaction {
-            Channels.insert {
+            Channels.insertIgnore {
                 it[id] = channelId
                 it[guild] = guildId
             }
@@ -60,7 +60,7 @@ class ChannelRepositoryImpl : ChannelRepository {
         logger.entry(channelIds, guildId)
 
         newSuspendedTransaction {
-            Channels.batchInsert(channelIds, shouldReturnGeneratedValues = false) { channelId ->
+            Channels.batchInsert(channelIds, ignore = true, shouldReturnGeneratedValues = false) { channelId ->
                 this[Channels.id] = channelId
                 this[Channels.guild] = guildId
             }
