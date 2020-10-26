@@ -4,6 +4,7 @@ import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.multiple
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.split
+import com.github.shirleh.command.OK_HAND_EMOJI
 import com.github.shirleh.command.cli.AbstractCommand
 import com.github.shirleh.command.cli.AbstractCommandCategory
 import com.github.shirleh.extensions.await
@@ -26,8 +27,6 @@ class Channel : AbstractCommandCategory(
         
     Configure which channels Laplace will collect its message-driven statistics from."""
 )
-
-private const val OK_HAND_EMOJI = "\uD83D\uDC4C"
 
 class ListChannelsCommand : AbstractCommand(
     name = "ls",

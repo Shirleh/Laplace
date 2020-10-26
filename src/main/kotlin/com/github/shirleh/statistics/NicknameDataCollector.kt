@@ -2,6 +2,7 @@ package com.github.shirleh.statistics
 
 import com.github.shirleh.extensions.orElseNull
 import com.github.shirleh.persistence.influx.DataPointRepository
+import com.github.shirleh.statistics.privacy.PrivacySettingsRepository
 import com.influxdb.client.domain.WritePrecision
 import com.influxdb.client.write.Point
 import discord4j.core.`object`.audit.ActionType
@@ -17,12 +18,12 @@ import org.koin.core.inject
 import java.time.Instant
 
 private data class NicknameChange(
-    val author: String,
+    val userId: String?,
     val newNickname: String,
     val hadNickname: Boolean,
 ) {
     fun toDataPoint() = Point.measurement("nickname")
-        .addTag("author", author)
+        .addTag("userId", userId ?: "")
         .addField("nickname", newNickname)
         .addField("hadNickname", hadNickname)
         .time(Instant.now(), WritePrecision.MS)
@@ -33,6 +34,7 @@ object NicknameDataCollector : KoinComponent {
     private val logger = KotlinLogging.logger { }
 
     private val dataPointRepository: DataPointRepository by inject()
+    private val privacySettingsRepository: PrivacySettingsRepository by inject()
 
     /**
      * Collects member nickname data from the incoming [events].
@@ -50,6 +52,9 @@ object NicknameDataCollector : KoinComponent {
     private suspend fun findNicknameChange(event: MemberUpdateEvent): NicknameChange? {
         logger.entry(event)
 
+        val privacySettings = privacySettingsRepository
+            .findByUserAndGuild(event.memberId.asLong(), event.guildId.asLong())
+
         val result = event.guild.awaitSingle()
             .getAuditLog { spec -> spec.setActionType(ActionType.MEMBER_UPDATE) }
             .asFlow()
@@ -58,8 +63,12 @@ object NicknameDataCollector : KoinComponent {
                 auditLogEntry
                     .getChange(ChangeKey.USER_NICK)
                     .map {
+                        val userId =
+                            if (privacySettings?.nickname == true) auditLogEntry.responsibleUserId.asString()
+                            else null
+
                         NicknameChange(
-                            author = auditLogEntry.responsibleUserId.asString(),
+                            userId = userId,
                             newNickname = it.currentValue.orElse(""),
                             hadNickname = it.oldValue.isPresent,
                         )

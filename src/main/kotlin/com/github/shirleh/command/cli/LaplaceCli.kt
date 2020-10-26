@@ -7,6 +7,7 @@ import com.github.shirleh.healthcheck.PingCommand
 import com.github.shirleh.healthcheck.UptimeCommand
 import com.github.shirleh.statistics.message.ActivityCommand
 import com.github.shirleh.statistics.message.MessageStatistic
+import com.github.shirleh.statistics.privacy.*
 import discord4j.core.event.domain.message.MessageCreateEvent
 
 internal class Laplace : AbstractCommand(name = "@Laplace") {
@@ -24,6 +25,11 @@ internal val laplaceCli: () -> Laplace = {
     Laplace().subcommands(
         MessageStatistic().subcommands(
             ActivityCommand()
+        ),
+        PrivacyCommands().subcommands(
+            ListPrivacySettingsCommand(),
+            OptInCommand(),
+            OptOutCommand()
         ),
         Administration().subcommands(
             Channel().subcommands(

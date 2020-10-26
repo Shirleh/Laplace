@@ -23,6 +23,7 @@ object ReactionEmojiDataCollector : KoinComponent {
     )
 
     private val channelRepository: ChannelRepository by inject()
+    private val privacySettingsRepository: PrivacySettingsRepository by inject()
     private val dataPointRepository: DataPointRepository by inject()
 
     private val logger = KotlinLogging.logger { }
@@ -43,10 +44,13 @@ object ReactionEmojiDataCollector : KoinComponent {
         .filter { context -> channelRepository.findAll(context.guildId.asLong()).contains(context.channelId.asLong()) }
         .filter { context -> !context.member.isBot }
         .map { context ->
+            val privacySettings = privacySettingsRepository
+                .findByUserAndGuild(context.member.id.asLong(), context.guildId.asLong())
+
             toEmoji(
                 reactionEmoji = context.reactionEmoji,
                 guildId = context.guildId.asString(),
-                channelId = context.channelId.asString()
+                userId = if (privacySettings?.emoji == true) context.member.id.asString() else null
             )
         }
         .onEach { logger.debug { it } }
@@ -54,8 +58,8 @@ object ReactionEmojiDataCollector : KoinComponent {
         .onEach(dataPointRepository::save)
         .catch { error -> logger.catching(error) }
 
-    private fun toEmoji(reactionEmoji: ReactionEmoji, guildId: String, channelId: String): Emoji {
-        logger.entry(reactionEmoji, guildId, channelId)
+    private fun toEmoji(reactionEmoji: ReactionEmoji, guildId: String, userId: String?): Emoji {
+        logger.entry(reactionEmoji, guildId, userId)
 
         val (type, value) =
             reactionEmoji.asUnicodeEmoji()
@@ -67,10 +71,10 @@ object ReactionEmojiDataCollector : KoinComponent {
                 }
         val result = Emoji(
             guildId = guildId,
-            channelId = channelId,
+            userId = userId,
             source = Source.REACTION,
             type = type,
-            value = value
+            id = value
         )
 
         return logger.exit(result)
