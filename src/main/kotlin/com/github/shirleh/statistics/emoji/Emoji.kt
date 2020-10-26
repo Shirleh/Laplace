@@ -9,7 +9,7 @@ internal enum class Type { UNICODE, CUSTOM }
 
 internal data class Emoji(
     val guildId: String,
-    val channelId: String,
+    val userId: String?,
     val source: Source,
     val type: Type,
     val id: String,
@@ -17,7 +17,7 @@ internal data class Emoji(
 ) {
     fun toDataPoint(): Point = Point.measurement("emoji")
         .addTag("guildId", guildId)
-        .addTag("channelId", channelId)
+        .addTag("userId", userId ?: "")
         .addTag("source", source.name)
         .addTag("type", type.name)
         .addField(id, count)

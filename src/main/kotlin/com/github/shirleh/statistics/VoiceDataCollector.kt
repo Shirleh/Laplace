@@ -1,6 +1,7 @@
 package com.github.shirleh.statistics
 
 import com.github.shirleh.persistence.influx.DataPointRepository
+import com.github.shirleh.statistics.privacy.PrivacySettingsRepository
 import com.influxdb.client.domain.WritePrecision
 import com.influxdb.client.write.Point
 import discord4j.common.util.Snowflake
@@ -14,7 +15,7 @@ import java.time.Instant
 private data class VoiceStateData(
     val guildId: String,
     val channelId: String,
-    val memberId: String,
+    val userId: String?,
     val isInVoice: Boolean,
     val isMuted: Boolean,
     val isSelfMuted: Boolean,
@@ -24,7 +25,7 @@ private data class VoiceStateData(
     fun toDataPoint() = Point.measurement("voiceState")
         .addTag("guildId", guildId)
         .addTag("channelId", channelId)
-        .addTag("guildMemberId", memberId)
+        .addTag("userId", userId ?: "")
         .addField("isInVoice", isInVoice)
         .addField("isMuted", isMuted)
         .addField("isSelfMuted", isSelfMuted)
@@ -38,6 +39,7 @@ object VoiceDataCollector : KoinComponent {
     private val logger = KotlinLogging.logger { }
 
     private val dataPointRepository: DataPointRepository by inject()
+    private val privacySettingsRepository: PrivacySettingsRepository by inject()
 
     /**
      * Collects voice data from the incoming [events].
@@ -50,24 +52,28 @@ object VoiceDataCollector : KoinComponent {
         .onEach(dataPointRepository::save)
         .catch { error -> logger.catching(error) }
 
-    private fun toVoiceStateData(event: VoiceStateUpdateEvent): VoiceStateData {
+    private suspend fun toVoiceStateData(event: VoiceStateUpdateEvent): VoiceStateData {
         logger.entry(event)
 
         val voiceState = event.current
-        val guildId = voiceState.guildId.asString()
-        val memberId = voiceState.userId.asString()
+
+        val guildId = voiceState.guildId
         val channelId = voiceState.channelId
             .map(Snowflake::asString)
             .orElseGet {
                 event.old
-                    .flatMap { old -> old.channelId.map { it.asString() } }
+                    .flatMap { oldVoiceState -> oldVoiceState.channelId.map(Snowflake::asString) }
                     .orElse("")
             }
+        val userId = voiceState.userId
+
+        val privacySettings = privacySettingsRepository
+            .findByUserAndGuild(userId.asLong(), guildId.asLong())
 
         val result = VoiceStateData(
-            guildId = guildId,
+            guildId = guildId.asString(),
             channelId = channelId,
-            memberId = memberId,
+            userId = if (privacySettings?.voice == true) userId.asString() else null,
             isInVoice = voiceState.channelId.isPresent,
             isMuted = voiceState.isMuted,
             isSelfMuted = voiceState.isSelfMuted,

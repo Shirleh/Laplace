@@ -26,6 +26,7 @@ object MessageEmojiDataCollector : KoinComponent {
     )
 
     private val channelRepository: ChannelRepository by inject()
+    private val privacySettingsRepository: PrivacySettingsRepository by inject()
     private val dataPointRepository: DataPointRepository by inject()
 
     private val logger = KotlinLogging.logger { }
@@ -46,10 +47,13 @@ object MessageEmojiDataCollector : KoinComponent {
         .filter { context -> channelRepository.findAll(context.guildId.asLong()).contains(context.channelId.asLong()) }
         .filter { context -> !context.user.isBot }
         .map { context ->
+            val privacySettings = privacySettingsRepository
+                .findByUserAndGuild(context.user.id.asLong(), context.guildId.asLong())
+
             parseToEmojis(
                 message = context.message,
                 guildId = context.guildId,
-                channelId = context.channelId
+                userId = if(privacySettings?.emoji == true) context.user.id else null
             )
         }
         .filter(List<Emoji>::isNotEmpty)
@@ -59,34 +63,34 @@ object MessageEmojiDataCollector : KoinComponent {
         .catch { error -> logger.catching(error) }
 
     @OptIn(ExperimentalStdlibApi::class)
-    private fun parseToEmojis(message: String, guildId: Snowflake, channelId: Snowflake): List<Emoji> {
-        logger.entry(message, guildId, channelId)
+    private fun parseToEmojis(message: String, guildId: Snowflake, userId: Snowflake?): List<Emoji> {
+        logger.entry(message, guildId, userId)
 
         val result = buildList {
-            addAll(extractUnicodeEmojis(message, guildId, channelId))
-            addAll(extractCustomEmojis(message, guildId, channelId))
+            addAll(extractUnicodeEmojis(message, guildId, userId))
+            addAll(extractCustomEmojis(message, guildId, userId))
         }
 
         return logger.exit(result)
     }
 
-    private fun extractUnicodeEmojis(input: String, guildId: Snowflake, channelId: Snowflake) =
+    private fun extractUnicodeEmojis(input: String, guildId: Snowflake, userId: Snowflake?) =
         EmojiParser.extractEmojis(input)
             .map(MessageEmojiDataCollector::removeFitzPatrickModifier)
             .map {
                 Emoji(
                     guildId = guildId.asString(),
-                    channelId = channelId.asString(),
+                    userId = userId?.asString(),
                     source = Source.MESSAGE,
                     type = Type.UNICODE,
-                    value = it
+                    id = it
                 )
             }
 
     private fun removeFitzPatrickModifier(emojiFullUnicode: String) =
         EmojiParser.parseFromUnicode(emojiFullUnicode) { it.emoji.unicode }
 
-    private fun extractCustomEmojis(input: String, guildId: Snowflake, channelId: Snowflake) =
+    private fun extractCustomEmojis(input: String, guildId: Snowflake, userId: Snowflake?) =
         input.split(" ")
             .filter { it.startsWith(CUSTOM_EMOJI_PREFIX) && it.endsWith(CUSTOM_EMOJI_SUFFIX) }
             .map { it.removeSurrounding(CUSTOM_EMOJI_PREFIX, CUSTOM_EMOJI_SUFFIX).split(":") }
@@ -94,10 +98,10 @@ object MessageEmojiDataCollector : KoinComponent {
             .map {
                 Emoji(
                     guildId = guildId.asString(),
-                    channelId = channelId.asString(),
+                    userId = userId?.asString(),
                     source = Source.MESSAGE,
                     type = Type.CUSTOM,
-                    value = it[1]
+                    id = it[1]
                 )
             }
 }

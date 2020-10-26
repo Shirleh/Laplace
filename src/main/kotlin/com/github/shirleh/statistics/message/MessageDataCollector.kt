@@ -3,6 +3,7 @@ package com.github.shirleh.statistics.message
 import com.github.shirleh.administration.ChannelRepository
 import com.github.shirleh.extensions.orElseNull
 import com.github.shirleh.persistence.influx.DataPointRepository
+import com.github.shirleh.statistics.privacy.PrivacySettingsRepository
 import com.influxdb.client.domain.WritePrecision
 import com.influxdb.client.write.Point
 import discord4j.common.util.Snowflake
@@ -17,7 +18,7 @@ import java.time.Instant
 private data class MessageData(
     val guildId: String,
     val channelId: String,
-    val userId: String,
+    val userId: String?,
     val length: Int,
     val wordCount: Int,
     val timestamp: Instant
@@ -25,7 +26,7 @@ private data class MessageData(
     fun toDataPoint() = Point.measurement("message")
         .addTag("guildId", guildId)
         .addTag("channel", channelId)
-        .addTag("userId", userId)
+        .addTag("userId", userId ?: "")
         .addField("length", length)
         .addField("wordCount", wordCount)
         .time(timestamp, WritePrecision.MS)
@@ -42,6 +43,7 @@ object MessageDataCollector : KoinComponent {
     )
 
     private val channelRepository: ChannelRepository by inject()
+    private val privacySettingsRepository: PrivacySettingsRepository by inject()
     private val dataPointRepository: DataPointRepository by inject()
 
     private val logger = KotlinLogging.logger { }
@@ -68,13 +70,16 @@ object MessageDataCollector : KoinComponent {
         .onEach(dataPointRepository::save)
         .catch { error -> logger.catching(error) }
 
-    private fun aggregateMessageData(context: Context): MessageData {
+    private suspend fun aggregateMessageData(context: Context): MessageData {
         logger.entry(context)
+
+        val privacySettings = privacySettingsRepository
+            .findByUserAndGuild(context.user.id.asLong(), context.guildId.asLong())
 
         val result = MessageData(
             guildId = context.guildId.asString(),
             channelId = context.channelId.asString(),
-            userId = context.user.id.asString(),
+            userId = if (privacySettings?.message == true) context.user.id.asString() else null,
             length = context.message.length,
             wordCount = context.message.split(" ").size,
             timestamp = context.timestamp
