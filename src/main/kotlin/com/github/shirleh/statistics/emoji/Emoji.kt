@@ -12,15 +12,14 @@ internal data class Emoji(
     val channelId: String,
     val source: Source,
     val type: Type,
-    val value: String
+    val id: String,
+    val count: Long = 1L,
 ) {
-    @OptIn(ExperimentalStdlibApi::class)
-    fun toDataPoint(): Point =
-        Point.measurement("emoji")
-            .addTag("guildId", guildId)
-            .addTag("channelId", channelId)
-            .addTag("source", source.name)
-            .addTag("type", type.name)
-            .addField("id", value)
-            .time(Instant.now(), WritePrecision.MS)
+    fun toDataPoint(): Point = Point.measurement("emoji")
+        .addTag("guildId", guildId)
+        .addTag("channelId", channelId)
+        .addTag("source", source.name)
+        .addTag("type", type.name)
+        .addField(id, count)
+        .time(Instant.now(), WritePrecision.MS)
 }
