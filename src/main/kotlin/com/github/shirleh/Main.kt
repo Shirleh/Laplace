@@ -5,7 +5,8 @@ import com.github.shirleh.command.CommandHandler
 import com.github.shirleh.persistence.influx.influxModule
 import com.github.shirleh.persistence.sqlite.sqliteModule
 import com.github.shirleh.statistics.*
-import com.github.shirleh.statistics.emoji.EmojiDataCollector
+import com.github.shirleh.statistics.emoji.MessageEmojiDataCollector
+import com.github.shirleh.statistics.emoji.ReactionEmojiDataCollector
 import com.github.shirleh.statistics.message.MessageDataCollector
 import discord4j.core.DiscordClient
 import discord4j.core.event.domain.VoiceStateUpdateEvent
@@ -49,11 +50,11 @@ fun main() = runBlocking<Unit> {
                 .launchIn(this)
 
             client.on(MessageCreateEvent::class.java).asFlow()
-                .let(EmojiDataCollector::addMessageListener)
+                .let(MessageEmojiDataCollector::addListener)
                 .launchIn(this)
 
             client.on(ReactionAddEvent::class.java).asFlow()
-                .let(EmojiDataCollector::addReactionListener)
+                .let(ReactionEmojiDataCollector::addListener)
                 .launchIn(this)
 
             client.on(MemberJoinEvent::class.java).asFlow()
