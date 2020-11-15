@@ -6,6 +6,7 @@ import com.github.shirleh.persistence.influx.DataPointRepository
 import com.influxdb.client.domain.WritePrecision
 import com.influxdb.client.write.Point
 import discord4j.common.util.Snowflake
+import discord4j.core.`object`.entity.User
 import discord4j.core.event.domain.message.MessageCreateEvent
 import kotlinx.coroutines.flow.*
 import mu.KotlinLogging
@@ -16,7 +17,7 @@ import java.time.Instant
 private data class MessageData(
     val guildId: String,
     val channelId: String,
-    val authorId: String,
+    val userId: String,
     val length: Int,
     val wordCount: Int,
     val timestamp: Instant
@@ -24,7 +25,7 @@ private data class MessageData(
     fun toDataPoint() = Point.measurement("message")
         .addTag("guildId", guildId)
         .addTag("channel", channelId)
-        .addTag("author", authorId)
+        .addTag("userId", userId)
         .addField("length", length)
         .addField("wordCount", wordCount)
         .time(timestamp, WritePrecision.MS)
@@ -32,44 +33,51 @@ private data class MessageData(
 
 object MessageDataCollector : KoinComponent {
 
-    private val logger = KotlinLogging.logger { }
+    private data class Context(
+        val guildId: Snowflake,
+        val channelId: Snowflake,
+        val user: User,
+        val message: String,
+        val timestamp: Instant,
+    )
 
     private val channelRepository: ChannelRepository by inject()
     private val dataPointRepository: DataPointRepository by inject()
+
+    private val logger = KotlinLogging.logger { }
 
     /**
      * Collects message data from the incoming [events].
      */
     fun addListener(events: Flow<MessageCreateEvent>) = events
         .buffer()
-        .filter { event ->
-            val guildId = event.guildId.map(Snowflake::asLong).orElseNull() ?: return@filter false
-            val channelId = event.message.channelId.asLong()
-            channelRepository.findAll(guildId).contains(channelId)
+        .mapNotNull { event ->
+            Context(
+                guildId = event.guildId.orElseNull() ?: return@mapNotNull null,
+                channelId = event.message.channelId,
+                user = event.message.author.orElseNull() ?: return@mapNotNull null,
+                message = event.message.content,
+                timestamp = event.message.timestamp,
+            )
         }
-        .filter { event -> event.message.author.map { !it.isBot }.orElse(false) }
-        .mapNotNull(MessageDataCollector::toMessageData)
+        .filter { context -> channelRepository.findAll(context.guildId.asLong()).contains(context.channelId.asLong()) }
+        .filter { context -> !context.user.isBot }
+        .map(MessageDataCollector::aggregateMessageData)
         .onEach { logger.debug { it } }
         .map(MessageData::toDataPoint)
         .onEach(dataPointRepository::save)
         .catch { error -> logger.catching(error) }
 
-    private fun toMessageData(event: MessageCreateEvent): MessageData? {
-        logger.entry(event)
-
-        val guildId = event.guildId.map(Snowflake::asString).orElseNull() ?: return logger.exit(null)
-        val message = event.message
-        val channelId = message.channelId.asString()
-        val authorId = message.author.map { it.id.asString() }.orElseNull() ?: return logger.exit(null)
-        val timestamp = message.timestamp
+    private fun aggregateMessageData(context: Context): MessageData {
+        logger.entry(context)
 
         val result = MessageData(
-            guildId = guildId,
-            channelId = channelId,
-            authorId = authorId,
-            length = message.content.length,
-            wordCount = message.content.split(" ").size,
-            timestamp = timestamp
+            guildId = context.guildId.asString(),
+            channelId = context.channelId.asString(),
+            userId = context.user.id.asString(),
+            length = context.message.length,
+            wordCount = context.message.split(" ").size,
+            timestamp = context.timestamp
         )
 
         return logger.exit(result)
