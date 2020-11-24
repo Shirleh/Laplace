@@ -2,7 +2,6 @@ package com.github.shirleh.statistics.emoji
 
 import com.github.shirleh.administration.ChannelRepository
 import com.github.shirleh.extensions.orElseNull
-import com.github.shirleh.persistence.influx.DataPointRepository
 import com.github.shirleh.statistics.privacy.PrivacySettingsRepository
 import discord4j.common.util.Snowflake
 import discord4j.core.`object`.entity.Member
@@ -22,11 +21,11 @@ object ReactionEmojiDataCollector : KoinComponent {
         val reactionEmoji: ReactionEmoji,
     )
 
+    private val logger = KotlinLogging.logger { }
+
     private val channelRepository: ChannelRepository by inject()
     private val privacySettingsRepository: PrivacySettingsRepository by inject()
-    private val dataPointRepository: DataPointRepository by inject()
-
-    private val logger = KotlinLogging.logger { }
+    private val emojiPointRepository: EmojiPointRepository by inject()
 
     /**
      * Collects emoji data from the incoming [events].
@@ -53,12 +52,10 @@ object ReactionEmojiDataCollector : KoinComponent {
                 userId = if (privacySettings?.emoji == true) context.member.id.asString() else null
             )
         }
-        .onEach { logger.debug { it } }
-        .map(Emoji::toDataPoint)
-        .onEach(dataPointRepository::save)
+        .onEach(emojiPointRepository::save)
         .catch { error -> logger.catching(error) }
 
-    private fun toEmoji(reactionEmoji: ReactionEmoji, guildId: String, userId: String?): Emoji {
+    private fun toEmoji(reactionEmoji: ReactionEmoji, guildId: String, userId: String?): EmojiPoint {
         logger.entry(reactionEmoji, guildId, userId)
 
         val (type, value) =
@@ -69,7 +66,7 @@ object ReactionEmojiDataCollector : KoinComponent {
                         .map { Pair(Type.CUSTOM, it.id.asString()) }
                         .orElseThrow()
                 }
-        val result = Emoji(
+        val result = EmojiPoint(
             guildId = guildId,
             userId = userId,
             source = Source.REACTION,

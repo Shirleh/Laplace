@@ -4,10 +4,15 @@ import com.github.shirleh.administration.administrationModule
 import com.github.shirleh.command.CommandHandler
 import com.github.shirleh.persistence.influx.influxModule
 import com.github.shirleh.persistence.sqlite.sqliteModule
-import com.github.shirleh.statistics.*
+import com.github.shirleh.statistics.ban.BanDataCollector
 import com.github.shirleh.statistics.emoji.MessageEmojiDataCollector
 import com.github.shirleh.statistics.emoji.ReactionEmojiDataCollector
+import com.github.shirleh.statistics.join.JoinDataCollector
+import com.github.shirleh.statistics.leave.LeaveDataCollector
 import com.github.shirleh.statistics.message.MessageDataCollector
+import com.github.shirleh.statistics.nickname.NicknameDataCollector
+import com.github.shirleh.statistics.statisticsModule
+import com.github.shirleh.statistics.voice.VoiceDataCollector
 import discord4j.core.DiscordClient
 import discord4j.core.event.domain.VoiceStateUpdateEvent
 import discord4j.core.event.domain.guild.BanEvent
@@ -61,11 +66,11 @@ fun main() = runBlocking<Unit> {
                 .launchIn(this)
 
             client.on(MemberJoinEvent::class.java).asFlow()
-                .let(MemberJoinDataCollector::addListener)
+                .let(JoinDataCollector::addListener)
                 .launchIn(this)
 
             client.on(MemberLeaveEvent::class.java).asFlow()
-                .let(MemberLeaveDataCollector::addListener)
+                .let(LeaveDataCollector::addListener)
                 .launchIn(this)
 
             client.on(MemberUpdateEvent::class.java).asFlow()

@@ -1,10 +1,8 @@
-package com.github.shirleh.statistics
+package com.github.shirleh.statistics.nickname
 
 import com.github.shirleh.extensions.orElseNull
-import com.github.shirleh.persistence.influx.DataPointRepository
+import com.github.shirleh.statistics.AUDIT_LOG_UPDATE_DELAY
 import com.github.shirleh.statistics.privacy.PrivacySettingsRepository
-import com.influxdb.client.domain.WritePrecision
-import com.influxdb.client.write.Point
 import discord4j.core.`object`.audit.ActionType
 import discord4j.core.`object`.audit.ChangeKey
 import discord4j.core.event.domain.guild.MemberUpdateEvent
@@ -15,25 +13,12 @@ import kotlinx.coroutines.reactive.awaitSingle
 import mu.KotlinLogging
 import org.koin.core.KoinComponent
 import org.koin.core.inject
-import java.time.Instant
-
-private data class NicknameChange(
-    val userId: String?,
-    val newNickname: String,
-    val hadNickname: Boolean,
-) {
-    fun toDataPoint() = Point.measurement("nickname")
-        .addTag("userId", userId ?: "")
-        .addField("nickname", newNickname)
-        .addField("hadNickname", hadNickname)
-        .time(Instant.now(), WritePrecision.MS)
-}
 
 object NicknameDataCollector : KoinComponent {
 
     private val logger = KotlinLogging.logger { }
 
-    private val dataPointRepository: DataPointRepository by inject()
+    private val nicknamePointRepository: NicknamePointRepository by inject()
     private val privacySettingsRepository: PrivacySettingsRepository by inject()
 
     /**
@@ -42,14 +27,12 @@ object NicknameDataCollector : KoinComponent {
     fun addListener(events: Flow<MemberUpdateEvent>) = events
         .buffer()
         .onEach { delay(AUDIT_LOG_UPDATE_DELAY) }
-        .mapNotNull(::findNicknameChange)
-        .onEach { logger.debug { it } }
-        .map(NicknameChange::toDataPoint)
-        .onEach(dataPointRepository::save)
+        .mapNotNull(this::aggregateNicknameData)
+        .onEach(nicknamePointRepository::save)
         .catch { error -> logger.catching(error) }
 
 
-    private suspend fun findNicknameChange(event: MemberUpdateEvent): NicknameChange? {
+    private suspend fun aggregateNicknameData(event: MemberUpdateEvent): NicknamePoint? {
         logger.entry(event)
 
         val privacySettings = privacySettingsRepository
@@ -67,7 +50,7 @@ object NicknameDataCollector : KoinComponent {
                             if (privacySettings?.nickname == true) auditLogEntry.responsibleUserId.asString()
                             else null
 
-                        NicknameChange(
+                        NicknamePoint(
                             userId = userId,
                             newNickname = it.currentValue.orElse(""),
                             hadNickname = it.oldValue.isPresent,

@@ -38,6 +38,7 @@ val sqliteVersion by extra("3.30.1")
 val kotlinLoggingVersion by extra("2.0.3")
 val logbackVersion by extra("1.2.3")
 val spekVersion by extra("2.0.13")
+val mockkVersion by extra("1.10.2")
 
 dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinCoroutinesVersion")
@@ -66,6 +67,7 @@ dependencies {
 
     testImplementation("org.jetbrains.kotlin:kotlin-test:$kotlinVersion")
     testImplementation("org.spekframework.spek2:spek-dsl-jvm:$spekVersion")
+    testImplementation("io.mockk:mockk:${mockkVersion}")
     testRuntimeOnly("org.spekframework.spek2:spek-runner-junit5:$spekVersion")
     testRuntimeOnly("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
 }
