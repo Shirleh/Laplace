@@ -31,7 +31,7 @@ class UptimeCommand : AbstractCommand(
         val minutes = duration.toMinutesPart()
         val seconds = duration.toSecondsPart()
 
-        val channel = event.message.channel.await()
-        channel.createMessage("""$days day(s), $hours hour(s), $minutes minute(s), $seconds second(s)""").await()
+        event.message.channel.await()
+            .createMessage("$days day(s), $hours hour(s), $minutes minute(s), $seconds second(s)").await()
     }
 }
