@@ -4,10 +4,14 @@ import com.github.ajalt.clikt.core.subcommands
 import com.github.shirleh.administration.*
 import com.github.shirleh.healthcheck.HealthCheck
 import com.github.shirleh.healthcheck.PingCommand
+import com.github.shirleh.healthcheck.ShowInfluxHealthCommand
 import com.github.shirleh.healthcheck.UptimeCommand
 import com.github.shirleh.statistics.message.ActivityCommand
 import com.github.shirleh.statistics.message.MessageStatistic
-import com.github.shirleh.statistics.privacy.*
+import com.github.shirleh.statistics.privacy.ListPrivacySettingsCommand
+import com.github.shirleh.statistics.privacy.OptInCommand
+import com.github.shirleh.statistics.privacy.OptOutCommand
+import com.github.shirleh.statistics.privacy.PrivacyCommands
 import discord4j.core.event.domain.message.MessageCreateEvent
 
 internal class Laplace : AbstractCommand(name = "@Laplace") {
@@ -41,6 +45,7 @@ internal val laplaceCli: () -> Laplace = {
         HealthCheck().subcommands(
             PingCommand(),
             UptimeCommand(),
+            ShowInfluxHealthCommand(),
         ),
     )
 }
