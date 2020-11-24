@@ -11,6 +11,4 @@ val influxModule = module {
     single { InfluxClientFactory.createClient(get()) }
     single { get<InfluxDBClient>().writeApi }
     single { InfluxClientFactory.getKotlinClient(get()).getQueryKotlinApi() }
-
-    single<DataPointRepository> { DataPointRepositoryImpl(get()) }
 }

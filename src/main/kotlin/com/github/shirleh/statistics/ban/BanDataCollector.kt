@@ -1,8 +1,6 @@
-package com.github.shirleh.statistics
+package com.github.shirleh.statistics.ban
 
-import com.github.shirleh.persistence.influx.DataPointRepository
-import com.influxdb.client.domain.WritePrecision
-import com.influxdb.client.write.Point
+import com.github.shirleh.statistics.AUDIT_LOG_UPDATE_DELAY
 import discord4j.common.util.Snowflake
 import discord4j.core.`object`.audit.ActionType
 import discord4j.core.event.domain.guild.BanEvent
@@ -13,20 +11,12 @@ import kotlinx.coroutines.reactive.awaitSingle
 import mu.KotlinLogging
 import org.koin.core.KoinComponent
 import org.koin.core.inject
-import java.time.Instant
-
-private data class BanData(val author: String, val count: Long = 1L) {
-    fun toDataPoint() = Point.measurement("ban")
-        .addTag("author", author)
-        .addField("count", 1)
-        .time(Instant.now(), WritePrecision.MS)
-}
 
 object BanDataCollector : KoinComponent {
 
     private val logger = KotlinLogging.logger { }
 
-    private val dataPointRepository: DataPointRepository by inject()
+    private val banPointRepository: BanPointRepository by inject()
 
     /**
      * Collects ban data from the incoming [events].
@@ -34,11 +24,9 @@ object BanDataCollector : KoinComponent {
     fun addListener(events: Flow<BanEvent>) = events
         .buffer()
         .onEach { delay(AUDIT_LOG_UPDATE_DELAY) }
-        .mapNotNull(BanDataCollector::findBanAuthorId)
-        .map(BanDataCollector::toDataPoint)
-        .onEach { logger.debug { it } }
-        .map(BanData::toDataPoint)
-        .onEach(dataPointRepository::save)
+        .mapNotNull(this::findBanAuthorId)
+        .map(::BanPoint)
+        .onEach(banPointRepository::save)
         .catch { error -> logger.catching(error) }
 
     private suspend fun findBanAuthorId(event: BanEvent): Snowflake? {
@@ -51,14 +39,6 @@ object BanDataCollector : KoinComponent {
             .filter { auditLogEntry -> auditLogEntry.targetId.orElse(null) == event.user.id }
             .map { auditLogEntry -> auditLogEntry.responsibleUserId }
             .firstOrNull()
-
-        return logger.exit(result)
-    }
-
-    private fun toDataPoint(banAuthorId: Snowflake): BanData {
-        logger.entry(banAuthorId)
-
-        val result = BanData(banAuthorId.asString())
 
         return logger.exit(result)
     }

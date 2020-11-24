@@ -2,7 +2,6 @@ package com.github.shirleh.statistics.emoji
 
 import com.github.shirleh.administration.ChannelRepository
 import com.github.shirleh.extensions.orElseNull
-import com.github.shirleh.persistence.influx.DataPointRepository
 import com.github.shirleh.statistics.privacy.PrivacySettingsRepository
 import com.vdurmont.emoji.EmojiParser
 import discord4j.common.util.Snowflake
@@ -25,11 +24,12 @@ object MessageEmojiDataCollector : KoinComponent {
         val message: String,
     )
 
+    private val logger = KotlinLogging.logger { }
+
     private val channelRepository: ChannelRepository by inject()
     private val privacySettingsRepository: PrivacySettingsRepository by inject()
-    private val dataPointRepository: DataPointRepository by inject()
+    private val emojiPointRepository: EmojiPointRepository by inject()
 
-    private val logger = KotlinLogging.logger { }
 
     /**
      * Collects emoji data from the incoming [events].
@@ -53,17 +53,15 @@ object MessageEmojiDataCollector : KoinComponent {
             parseToEmojis(
                 message = context.message,
                 guildId = context.guildId,
-                userId = if(privacySettings?.emoji == true) context.user.id else null
+                userId = if (privacySettings?.emoji == true) context.user.id else null
             )
         }
-        .filter(List<Emoji>::isNotEmpty)
-        .onEach { logger.debug { "Emojis $it" } }
-        .map { emojis -> emojis.map(Emoji::toDataPoint) }
-        .onEach(dataPointRepository::save)
+        .filter(List<EmojiPoint>::isNotEmpty)
+        .onEach(emojiPointRepository::save)
         .catch { error -> logger.catching(error) }
 
     @OptIn(ExperimentalStdlibApi::class)
-    private fun parseToEmojis(message: String, guildId: Snowflake, userId: Snowflake?): List<Emoji> {
+    private fun parseToEmojis(message: String, guildId: Snowflake, userId: Snowflake?): List<EmojiPoint> {
         logger.entry(message, guildId, userId)
 
         val result = buildList {
@@ -78,7 +76,7 @@ object MessageEmojiDataCollector : KoinComponent {
         EmojiParser.extractEmojis(input)
             .map(MessageEmojiDataCollector::removeFitzPatrickModifier)
             .map {
-                Emoji(
+                EmojiPoint(
                     guildId = guildId.asString(),
                     userId = userId?.asString(),
                     source = Source.MESSAGE,
@@ -96,7 +94,7 @@ object MessageEmojiDataCollector : KoinComponent {
             .map { it.removeSurrounding(CUSTOM_EMOJI_PREFIX, CUSTOM_EMOJI_SUFFIX).split(":") }
             .filter { it.size == 2 }
             .map {
-                Emoji(
+                EmojiPoint(
                     guildId = guildId.asString(),
                     userId = userId?.asString(),
                     source = Source.MESSAGE,

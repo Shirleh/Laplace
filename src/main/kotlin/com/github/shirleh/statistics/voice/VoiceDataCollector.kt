@@ -1,44 +1,18 @@
-package com.github.shirleh.statistics
+package com.github.shirleh.statistics.voice
 
-import com.github.shirleh.persistence.influx.DataPointRepository
 import com.github.shirleh.statistics.privacy.PrivacySettingsRepository
-import com.influxdb.client.domain.WritePrecision
-import com.influxdb.client.write.Point
 import discord4j.common.util.Snowflake
 import discord4j.core.event.domain.VoiceStateUpdateEvent
 import kotlinx.coroutines.flow.*
 import mu.KotlinLogging
 import org.koin.core.KoinComponent
 import org.koin.core.inject
-import java.time.Instant
-
-private data class VoiceStateData(
-    val guildId: String,
-    val channelId: String,
-    val userId: String?,
-    val isInVoice: Boolean,
-    val isMuted: Boolean,
-    val isSelfMuted: Boolean,
-    val isDeafened: Boolean,
-    val isSelfDeafened: Boolean,
-) {
-    fun toDataPoint() = Point.measurement("voiceState")
-        .addTag("guildId", guildId)
-        .addTag("channelId", channelId)
-        .addTag("userId", userId ?: "")
-        .addField("isInVoice", isInVoice)
-        .addField("isMuted", isMuted)
-        .addField("isSelfMuted", isSelfMuted)
-        .addField("isDeafened", isDeafened)
-        .addField("isSelfDeafened", isSelfDeafened)
-        .time(Instant.now(), WritePrecision.MS)
-}
 
 object VoiceDataCollector : KoinComponent {
 
     private val logger = KotlinLogging.logger { }
 
-    private val dataPointRepository: DataPointRepository by inject()
+    private val voiceDataRepository: VoicePointRepository by inject()
     private val privacySettingsRepository: PrivacySettingsRepository by inject()
 
     /**
@@ -46,13 +20,11 @@ object VoiceDataCollector : KoinComponent {
      */
     fun addListener(events: Flow<VoiceStateUpdateEvent>) = events
         .buffer()
-        .map(VoiceDataCollector::toVoiceStateData)
-        .onEach { logger.debug { it } }
-        .map(VoiceStateData::toDataPoint)
-        .onEach(dataPointRepository::save)
+        .map(VoiceDataCollector::aggregateVoiceData)
+        .onEach(voiceDataRepository::save)
         .catch { error -> logger.catching(error) }
 
-    private suspend fun toVoiceStateData(event: VoiceStateUpdateEvent): VoiceStateData {
+    private suspend fun aggregateVoiceData(event: VoiceStateUpdateEvent): VoicePoint {
         logger.entry(event)
 
         val voiceState = event.current
@@ -70,7 +42,7 @@ object VoiceDataCollector : KoinComponent {
         val privacySettings = privacySettingsRepository
             .findByUserAndGuild(userId.asLong(), guildId.asLong())
 
-        val result = VoiceStateData(
+        val result = VoicePoint(
             guildId = guildId.asString(),
             channelId = channelId,
             userId = if (privacySettings?.voice == true) userId.asString() else null,
