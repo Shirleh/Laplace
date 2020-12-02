@@ -32,7 +32,11 @@ class ActivityCommand : AbstractCommand(
 
     private val queryApi: QueryKotlinApi by inject()
 
-    private val range by option("-r", "--range", help = "time range in days (1-30); defaults to 1").long().default(1L)
+    private val range by option("-r", "--range", help = "time range in days (1-30); defaults to 7").long().default(7L)
+        .validate {
+            require(it > 0) { "time range must be 1 or higher" }
+            require(it <= 30) { "time range must be 30 or lower" }
+        }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override suspend fun execute(event: MessageCreateEvent) {
