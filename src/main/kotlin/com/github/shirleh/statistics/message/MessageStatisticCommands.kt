@@ -64,11 +64,15 @@ class ActivityCommand : AbstractCommand(
         }
         channel
             .createEmbed { spec ->
-                val channelList = results.keys.fold(StringBuilder()) { acc, s -> acc.appendLine(s) }.toString()
-                val countList = results.values.fold(StringBuilder()) { acc, l -> acc.appendLine(l) }.toString()
+                val channelList = results.keys
+                    .fold(StringBuilder()) { acc, s -> acc.appendLine(s) }
+                    .let { if (it.isEmpty()) "-" else it.toString() }
+                val frequencyList = results.values
+                    .fold(StringBuilder()) { acc, l -> acc.appendLine(l) }
+                    .let { if (it.isEmpty()) "-" else it.toString() }
 
                 spec.addField("Channel", channelList, true)
-                    .addField("Messages", countList, true)
+                    .addField("Messages", frequencyList, true)
                     .setColor(Color.WHITE)
             }
             .await()
