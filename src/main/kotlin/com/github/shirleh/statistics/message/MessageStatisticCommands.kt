@@ -44,11 +44,11 @@ class ActivityCommand : AbstractCommand(
 
         val flux = Flux.from("raw_discord_data")
             .range(-range, ChronoUnit.DAYS)
-            .filter(Restrictions.measurement().equal("message_count"))
-            .filter(Restrictions.tag("guildId").equal(guildId))
+            .filter(measurement().equal("message"))
+            .filter(field().equal("wordCount"))
+            .filter(tag("guildId").equal(guildId))
             .groupBy("channel")
             .sum()
-            .group()
             .sort(true)
             .limit(10)
         val topChannels = flux.toString().also { logger.debug { "Query: $it" } }
