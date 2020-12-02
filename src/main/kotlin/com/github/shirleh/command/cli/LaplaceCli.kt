@@ -6,6 +6,8 @@ import com.github.shirleh.healthcheck.HealthCheck
 import com.github.shirleh.healthcheck.PingCommand
 import com.github.shirleh.healthcheck.ShowInfluxHealthCommand
 import com.github.shirleh.healthcheck.UptimeCommand
+import com.github.shirleh.statistics.emoji.EmojiStatistics
+import com.github.shirleh.statistics.emoji.TopEmojiCommand
 import com.github.shirleh.statistics.message.ActivityCommand
 import com.github.shirleh.statistics.message.MessageStatistic
 import com.github.shirleh.statistics.privacy.ListPrivacySettingsCommand
@@ -27,6 +29,9 @@ internal class Laplace : AbstractCommand(name = "@Laplace") {
 
 internal val laplaceCli: () -> Laplace = {
     Laplace().subcommands(
+        EmojiStatistics().subcommands(
+            TopEmojiCommand()
+        ),
         MessageStatistic().subcommands(
             ActivityCommand()
         ),
