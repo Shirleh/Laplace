@@ -33,7 +33,6 @@ object ReactionEmojiDataCollector : KoinComponent {
      */
     @OptIn(FlowPreview::class)
     fun addListener(events: Flow<ReactionAddEvent>) = events
-        .buffer()
         .mapNotNull { event ->
             Context(
                 guildId = event.guildId.orElseNull() ?: return@mapNotNull null,
@@ -43,6 +42,7 @@ object ReactionEmojiDataCollector : KoinComponent {
             )
         }
         .filter { context -> !context.member.isBot }
+        .buffer()
         .flatMapConcat { context ->
             flowOf(context)
                 .filter { channelRepository.findAll(it.guildId.asLong()).contains(it.channelId.asLong()) }

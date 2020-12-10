@@ -18,8 +18,8 @@ object JoinDataCollector : KoinComponent {
      */
     @OptIn(FlowPreview::class)
     fun addListener(events: Flow<MemberJoinEvent>) = events
-        .buffer()
         .filter { event -> !event.member.isBot }
+        .buffer()
         .flatMapConcat { event ->
             flowOf(event)
                 .map(this::aggregateJoinData)
