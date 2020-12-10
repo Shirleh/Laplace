@@ -3,6 +3,7 @@ package com.github.shirleh.statistics.leave
 import com.github.shirleh.extensions.orElseNull
 import com.github.shirleh.statistics.privacy.PrivacySettingsRepository
 import discord4j.core.event.domain.guild.MemberLeaveEvent
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
 import mu.KotlinLogging
 import org.koin.core.KoinComponent
@@ -20,12 +21,15 @@ object LeaveDataCollector : KoinComponent {
     /**
      * Collects member leave data from the incoming [events].
      */
+    @OptIn(FlowPreview::class)
     fun addListener(events: Flow<MemberLeaveEvent>) = events
         .buffer()
-        .mapNotNull(this::aggregateLeaveData)
-        .onEach(leavePointRepository::save)
-        .catch { error -> logger.catching(error) }
-
+        .flatMapConcat { event ->
+            flowOf(event)
+                .mapNotNull(this::aggregateLeaveData)
+                .onEach(leavePointRepository::save)
+                .catch { error -> logger.catching(error) }
+        }
 
     private suspend fun aggregateLeaveData(event: MemberLeaveEvent): LeavePoint? {
         logger.entry(event)

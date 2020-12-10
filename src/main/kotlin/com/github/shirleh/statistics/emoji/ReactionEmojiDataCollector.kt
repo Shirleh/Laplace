@@ -7,6 +7,7 @@ import discord4j.common.util.Snowflake
 import discord4j.core.`object`.entity.Member
 import discord4j.core.`object`.reaction.ReactionEmoji
 import discord4j.core.event.domain.message.ReactionAddEvent
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
 import mu.KotlinLogging
 import org.koin.core.KoinComponent
@@ -30,6 +31,7 @@ object ReactionEmojiDataCollector : KoinComponent {
     /**
      * Collects emoji data from the incoming [events].
      */
+    @OptIn(FlowPreview::class)
     fun addListener(events: Flow<ReactionAddEvent>) = events
         .buffer()
         .mapNotNull { event ->
@@ -40,24 +42,22 @@ object ReactionEmojiDataCollector : KoinComponent {
                 reactionEmoji = event.emoji
             )
         }
-        .filter { context -> channelRepository.findAll(context.guildId.asLong()).contains(context.channelId.asLong()) }
         .filter { context -> !context.member.isBot }
-        .map { context ->
-            val privacySettings = privacySettingsRepository
-                .findByUserAndGuild(context.member.id.asLong(), context.guildId.asLong())
-
-            toEmoji(
-                reactionEmoji = context.reactionEmoji,
-                guildId = context.guildId.asString(),
-                userId = if (privacySettings?.emoji == true) context.member.id.asString() else null
-            )
+        .flatMapConcat { context ->
+            flowOf(context)
+                .filter { channelRepository.findAll(it.guildId.asLong()).contains(it.channelId.asLong()) }
+                .map(this::aggregateEmojiData)
+                .onEach(emojiPointRepository::save)
+                .catch { error -> logger.catching(error) }
         }
-        .onEach(emojiPointRepository::save)
-        .catch { error -> logger.catching(error) }
 
-    private fun toEmoji(reactionEmoji: ReactionEmoji, guildId: String, userId: String?): EmojiPoint {
-        logger.entry(reactionEmoji, guildId, userId)
+    private suspend fun aggregateEmojiData(context: Context): EmojiPoint {
+        logger.entry(context)
 
+        val privacySettings = privacySettingsRepository
+            .findByUserAndGuild(context.member.id.asLong(), context.guildId.asLong())
+
+        val (guildId, _, member, reactionEmoji) = context
         val (type, value) =
             reactionEmoji.asUnicodeEmoji()
                 .map { Pair(Type.UNICODE, it.raw) }
@@ -66,9 +66,10 @@ object ReactionEmojiDataCollector : KoinComponent {
                         .map { Pair(Type.CUSTOM, it.id.asString()) }
                         .orElseThrow()
                 }
+
         val result = EmojiPoint(
-            guildId = guildId,
-            userId = userId,
+            guildId = guildId.asString(),
+            userId = if (privacySettings?.emoji == true) member.id.asString() else null,
             source = Source.REACTION,
             type = type,
             id = value

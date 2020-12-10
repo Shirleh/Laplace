@@ -7,6 +7,7 @@ import com.vdurmont.emoji.EmojiParser
 import discord4j.common.util.Snowflake
 import discord4j.core.`object`.entity.User
 import discord4j.core.event.domain.message.MessageCreateEvent
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
 import mu.KotlinLogging
 import org.koin.core.KoinComponent
@@ -34,6 +35,7 @@ object MessageEmojiDataCollector : KoinComponent {
     /**
      * Collects emoji data from the incoming [events].
      */
+    @OptIn(FlowPreview::class)
     fun addListener(events: Flow<MessageCreateEvent>) = events
         .buffer()
         .mapNotNull { event ->
@@ -44,21 +46,26 @@ object MessageEmojiDataCollector : KoinComponent {
                 message = event.message.content,
             )
         }
-        .filter { context -> channelRepository.findAll(context.guildId.asLong()).contains(context.channelId.asLong()) }
         .filter { context -> !context.user.isBot }
-        .map { context ->
-            val privacySettings = privacySettingsRepository
-                .findByUserAndGuild(context.user.id.asLong(), context.guildId.asLong())
-
-            parseToEmojis(
-                message = context.message,
-                guildId = context.guildId,
-                userId = if (privacySettings?.emoji == true) context.user.id else null
-            )
+        .flatMapConcat { context ->
+            flowOf(context)
+                .filter { channelRepository.findAll(it.guildId.asLong()).contains(it.channelId.asLong()) }
+                .map(this::aggregateEmojiData)
+                .filter(List<EmojiPoint>::isNotEmpty)
+                .onEach(emojiPointRepository::save)
+                .catch { error -> logger.catching(error) }
         }
-        .filter(List<EmojiPoint>::isNotEmpty)
-        .onEach(emojiPointRepository::save)
-        .catch { error -> logger.catching(error) }
+
+    private suspend fun aggregateEmojiData(context: Context): List<EmojiPoint> {
+        val privacySettings = privacySettingsRepository
+            .findByUserAndGuild(context.user.id.asLong(), context.guildId.asLong())
+
+        return parseToEmojis(
+            message = context.message,
+            guildId = context.guildId,
+            userId = if (privacySettings?.emoji == true) context.user.id else null
+        )
+    }
 
     @OptIn(ExperimentalStdlibApi::class)
     private fun parseToEmojis(message: String, guildId: Snowflake, userId: Snowflake?): List<EmojiPoint> {

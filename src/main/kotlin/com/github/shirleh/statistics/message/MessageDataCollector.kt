@@ -6,6 +6,7 @@ import com.github.shirleh.statistics.privacy.PrivacySettingsRepository
 import discord4j.common.util.Snowflake
 import discord4j.core.`object`.entity.User
 import discord4j.core.event.domain.message.MessageCreateEvent
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
 import mu.KotlinLogging
 import org.koin.core.KoinComponent
@@ -31,6 +32,7 @@ object MessageDataCollector : KoinComponent {
     /**
      * Collects message data from the incoming [events].
      */
+    @OptIn(FlowPreview::class)
     fun addListener(events: Flow<MessageCreateEvent>) = events
         .buffer()
         .mapNotNull { event ->
@@ -42,11 +44,14 @@ object MessageDataCollector : KoinComponent {
                 timestamp = event.message.timestamp,
             )
         }
-        .filter { context -> channelRepository.findAll(context.guildId.asLong()).contains(context.channelId.asLong()) }
         .filter { context -> !context.user.isBot }
-        .map(MessageDataCollector::aggregateMessageData)
-        .onEach(messagePointRepository::save)
-        .catch { error -> logger.catching(error) }
+        .flatMapConcat { context ->
+            flowOf(context)
+                .filter { channelRepository.findAll(it.guildId.asLong()).contains(it.channelId.asLong()) }
+                .map(MessageDataCollector::aggregateMessageData)
+                .onEach(messagePointRepository::save)
+                .catch { error -> logger.catching(error) }
+        }
 
     private suspend fun aggregateMessageData(context: Context): MessagePoint {
         logger.entry(context)

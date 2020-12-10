@@ -1,6 +1,7 @@
 package com.github.shirleh.statistics.join
 
 import discord4j.core.event.domain.guild.MemberJoinEvent
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
 import mu.KotlinLogging
 import org.koin.core.KoinComponent
@@ -15,12 +16,16 @@ object JoinDataCollector : KoinComponent {
     /**
      * Collects member join data from the incoming [events].
      */
+    @OptIn(FlowPreview::class)
     fun addListener(events: Flow<MemberJoinEvent>) = events
         .buffer()
         .filter { event -> !event.member.isBot }
-        .map(this::aggregateJoinData)
-        .onEach(joinPointRepository::save)
-        .catch { error -> logger.catching(error) }
+        .flatMapConcat { event ->
+            flowOf(event)
+                .map(this::aggregateJoinData)
+                .onEach(joinPointRepository::save)
+                .catch { error -> logger.catching(error) }
+        }
 
     private fun aggregateJoinData(event: MemberJoinEvent): JoinPoint {
         logger.entry(event)
