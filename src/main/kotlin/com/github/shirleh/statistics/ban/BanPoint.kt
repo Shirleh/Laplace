@@ -9,11 +9,13 @@ import java.time.Instant
 data class BanPoint(
     val guildId: Snowflake,
     val author: Snowflake,
+    val isBot: Boolean,
     val count: Long = 1L
 ) : InfluxPoint {
     override fun toDataPoint() = Point.measurement("ban")
         .addTag("guildId", guildId.asString())
         .addTag("author", author.asString())
+        .addTag("isBot", isBot.toString())
         .addField("count", 1)
         .time(Instant.now(), WritePrecision.MS)
 }
