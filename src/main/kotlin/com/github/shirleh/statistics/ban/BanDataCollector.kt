@@ -28,7 +28,7 @@ object BanDataCollector : KoinComponent {
         .flatMapConcat { event ->
             flowOf(event)
                 .mapNotNull(this::findBanAuthorId)
-                .map(::BanPoint)
+                .map { BanPoint(event.guildId, it) }
                 .onEach(banPointRepository::save)
                 .catch { error -> logger.catching(error) }
         }
