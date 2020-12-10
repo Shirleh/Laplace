@@ -41,6 +41,7 @@ class ShowBanRankingCommand : AbstractCommand(
             require(it > 0) { "time range must be 1 or higher" }
             require(it <= 30) { "time range must be 30 or lower" }
         }
+    private val excludeBots by option("--exclude-bots").flag()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override suspend fun execute(event: MessageCreateEvent) {
@@ -52,6 +53,7 @@ class ShowBanRankingCommand : AbstractCommand(
             .range(-range, ChronoUnit.DAYS)
             .filter(Restrictions.measurement().equal("ban"))
             .filter(Restrictions.tag("guildId").equal(guildId))
+            .let { if (excludeBots) it.filter(Restrictions.tag("isBot").equal("${false}")) else it }
             .filter(Restrictions.field().equal("count"))
             .sum()
             .sort(true)
@@ -61,9 +63,9 @@ class ShowBanRankingCommand : AbstractCommand(
         val fluxRecords = queryApi.query(topBanners)
         val results = mutableMapOf<String, Long>().apply {
             fluxRecords.consumeEach {
-                val channel = "<#${it.getValueByKey("author")}>"
+                val author = "<@${it.getValueByKey("author")}>"
                 val count = it.value as Long
-                put(channel, count)
+                put(author, count)
             }
         }
 
