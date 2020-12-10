@@ -17,12 +17,16 @@ object CommandHandler {
     /**
      * Listens to incoming [MessageCreateEvent]s and execute the containing command.
      */
+    @OptIn(kotlinx.coroutines.FlowPreview::class)
     fun addListener(events: Flow<MessageCreateEvent>) = events
         .buffer()
         .filter { event -> event.message.content.startsWith("""<@!${event.client.selfId.asString()}>""") }
         .filter { event -> event.message.author.map { !it.isBot }.orElse(false) }
-        .onEach { event -> executeCommand(event) }
-        .catch { error -> logger.catching(error) }
+        .flatMapConcat { event ->
+            flowOf(event)
+                .onEach(CommandHandler::executeCommand)
+                .catch { error -> logger.error { error } }
+        }
 
     private suspend fun executeCommand(event: MessageCreateEvent) {
         logger.entry(event)

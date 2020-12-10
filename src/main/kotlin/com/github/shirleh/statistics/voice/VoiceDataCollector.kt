@@ -3,6 +3,7 @@ package com.github.shirleh.statistics.voice
 import com.github.shirleh.statistics.privacy.PrivacySettingsRepository
 import discord4j.common.util.Snowflake
 import discord4j.core.event.domain.VoiceStateUpdateEvent
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
 import mu.KotlinLogging
 import org.koin.core.KoinComponent
@@ -18,11 +19,15 @@ object VoiceDataCollector : KoinComponent {
     /**
      * Collects voice data from the incoming [events].
      */
+    @OptIn(FlowPreview::class)
     fun addListener(events: Flow<VoiceStateUpdateEvent>) = events
         .buffer()
-        .map(VoiceDataCollector::aggregateVoiceData)
-        .onEach(voiceDataRepository::save)
-        .catch { error -> logger.catching(error) }
+        .flatMapConcat { event ->
+            flowOf(event)
+                .map(VoiceDataCollector::aggregateVoiceData)
+                .onEach(voiceDataRepository::save)
+                .catch { error -> logger.catching(error) }
+        }
 
     private suspend fun aggregateVoiceData(event: VoiceStateUpdateEvent): VoicePoint {
         logger.entry(event)

@@ -4,6 +4,7 @@ import com.github.shirleh.statistics.AUDIT_LOG_UPDATE_DELAY
 import discord4j.common.util.Snowflake
 import discord4j.core.`object`.audit.ActionType
 import discord4j.core.event.domain.guild.BanEvent
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.reactive.asFlow
@@ -21,16 +22,21 @@ object BanDataCollector : KoinComponent {
     /**
      * Collects ban data from the incoming [events].
      */
+    @OptIn(FlowPreview::class)
     fun addListener(events: Flow<BanEvent>) = events
         .buffer()
-        .onEach { delay(AUDIT_LOG_UPDATE_DELAY) }
-        .mapNotNull(this::findBanAuthorId)
-        .map(::BanPoint)
-        .onEach(banPointRepository::save)
-        .catch { error -> logger.catching(error) }
+        .flatMapConcat { event ->
+            flowOf(event)
+                .mapNotNull(this::findBanAuthorId)
+                .map(::BanPoint)
+                .onEach(banPointRepository::save)
+                .catch { error -> logger.catching(error) }
+        }
 
     private suspend fun findBanAuthorId(event: BanEvent): Snowflake? {
         logger.entry(event)
+
+        delay(AUDIT_LOG_UPDATE_DELAY)
 
         val result = event.guild.awaitSingle()
             .getAuditLog { spec -> spec.setActionType(ActionType.MEMBER_BAN_ADD) }
