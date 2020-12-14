@@ -30,9 +30,9 @@ class EmojiStatistics : AbstractCommandCategory(
     help = """Show emoji statistics."""
 )
 
-class TopEmojiCommand : AbstractCommand(
-    name = "top",
-    help = """Show channel activity."""
+class ShowEmojiRankingCommand : AbstractCommand(
+    name = "ranking",
+    help = """Show the top most-used emojis in the server."""
 ) {
     private val logger = KotlinLogging.logger { }
 

@@ -10,9 +10,9 @@ import com.github.shirleh.statistics.ban.BanStatisticsCommands
 import com.github.shirleh.statistics.ban.ShowBanCountCommand
 import com.github.shirleh.statistics.ban.ShowBanRankingCommand
 import com.github.shirleh.statistics.emoji.EmojiStatistics
-import com.github.shirleh.statistics.emoji.TopEmojiCommand
-import com.github.shirleh.statistics.message.ActivityCommand
+import com.github.shirleh.statistics.emoji.ShowEmojiRankingCommand
 import com.github.shirleh.statistics.message.MessageStatistic
+import com.github.shirleh.statistics.message.ShowMessageRankingCommand
 import com.github.shirleh.statistics.privacy.ListPrivacySettingsCommand
 import com.github.shirleh.statistics.privacy.OptInCommand
 import com.github.shirleh.statistics.privacy.OptOutCommand
@@ -37,10 +37,10 @@ internal val laplaceCli: () -> Laplace = {
             ShowBanCountCommand()
         ),
         EmojiStatistics().subcommands(
-            TopEmojiCommand()
+            ShowEmojiRankingCommand()
         ),
         MessageStatistic().subcommands(
-            ActivityCommand()
+            ShowMessageRankingCommand()
         ),
         PrivacyCommands().subcommands(
             ListPrivacySettingsCommand(),
