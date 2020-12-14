@@ -30,7 +30,7 @@ class BanStatisticsCommands : AbstractCommandCategory(
 
 class ShowBanRankingCommand : AbstractCommand(
     name = "ranking",
-    help = """Show ranking by highest number of bans""",
+    help = """Show the top moderators with the most bans""",
 ) {
     private val logger = KotlinLogging.logger { }
 

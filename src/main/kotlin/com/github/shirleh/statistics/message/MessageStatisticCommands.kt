@@ -27,9 +27,9 @@ class MessageStatistic : AbstractCommandCategory(
     help = """Show message statistics."""
 )
 
-class ActivityCommand : AbstractCommand(
-    name = "activity",
-    help = """Show channel activity."""
+class ShowMessageRankingCommand : AbstractCommand(
+    name = "ranking",
+    help = """Show the top channels with the most messages."""
 ) {
     private val logger = KotlinLogging.logger { }
 
