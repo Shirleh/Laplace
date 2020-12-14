@@ -4,16 +4,23 @@ import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.multiple
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.split
+import com.github.ajalt.clikt.parameters.types.long
 import com.github.shirleh.command.OK_HAND_EMOJI
 import com.github.shirleh.command.cli.AbstractCommand
 import com.github.shirleh.command.cli.AbstractCommandCategory
 import com.github.shirleh.extensions.await
 import com.github.shirleh.extensions.orElseNull
 import discord4j.common.util.Snowflake
+import discord4j.core.`object`.entity.Guild
 import discord4j.core.`object`.entity.Member
+import discord4j.core.`object`.entity.channel.CategorizableChannel
+import discord4j.core.`object`.entity.channel.Category
 import discord4j.core.`object`.reaction.ReactionEmoji
 import discord4j.core.event.domain.message.MessageCreateEvent
 import discord4j.rest.util.Color
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.toSet
+import kotlinx.coroutines.reactive.asFlow
 import org.koin.core.inject
 
 class Administration : AbstractCommandCategory(
@@ -63,15 +70,29 @@ class AddChannelCommand : AbstractCommand(
     private val channelRepository: ChannelRepository by inject()
 
     private val channelMentions by argument().multiple()
+    private val categoryId by option("--category", help = "adds all channels under given category").long()
 
     override suspend fun execute(event: MessageCreateEvent) {
         event.member.filter { it.hasPermission(config) }.orElseNull() ?: return
         val guildId = event.guildId.map(Snowflake::asLong).orElseNull() ?: return
 
-        val channelIds = channelMentions.mapNotNull(String::toChannelId).toSet()
-        channelRepository.save(channelIds, guildId)
+        val channelIdsByCategory = categoryId?.let { getChannelsByCategory(event.guild.await(), it) } ?: emptySet()
+        val channelIdsByMentions = channelMentions.mapNotNull(String::toChannelId).toSet()
+        val allChannelIds = channelIdsByCategory + channelIdsByMentions
+        channelRepository.save(allChannelIds, guildId)
 
         event.message.addReaction(ReactionEmoji.unicode(OK_HAND_EMOJI)).await()
+    }
+
+    private suspend fun getChannelsByCategory(guild: Guild, categoryId: Long): Set<Long> {
+        val channel = guild.getChannelById(Snowflake.of(categoryId)).await()
+        return if (channel is Category)
+            channel.channels.asFlow()
+                .map(CategorizableChannel::getId)
+                .map(Snowflake::asLong)
+                .toSet()
+        else
+            emptySet()
     }
 }
 
