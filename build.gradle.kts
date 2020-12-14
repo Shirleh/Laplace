@@ -1,11 +1,11 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.4.10"
-    kotlin("kapt") version "1.4.10"
+    kotlin("jvm") version "1.4.21"
+    kotlin("kapt") version "1.4.21"
     application
     id("com.github.johnrengelman.shadow") version "5.2.0"
-    id("com.google.cloud.tools.jib") version "2.6.0"
+    id("com.google.cloud.tools.jib") version "2.7.0"
 }
 
 group = "org.github.shirleh"
@@ -20,25 +20,25 @@ repositories {
     jcenter()
 }
 
-val kotlinVersion by extra("1.4.10")
-val kotlinCoroutinesVersion by extra("1.3.9")
+val kotlinVersion by extra("1.4.21")
+val kotlinCoroutinesVersion by extra("1.4.1")
 
 val arrowVersion by extra("0.11.0")
 val koinVersion by extra("2.1.6")
-val configVersion by extra("1.4.0")
+val configVersion by extra("1.4.1")
 
-val discord4jVersion by extra("3.1.1")
-val cliktVersion by extra("3.0.1")
+val discord4jVersion by extra("3.1.3")
+val cliktVersion by extra("3.1.0")
 val emojiJavaVersion by extra("5.1.1")
 
-val influxDBVersion by extra("1.12.0")
-val exposedVersion by extra("0.25.1")
-val sqliteVersion by extra("3.30.1")
+val influxDBVersion by extra("1.14.0")
+val exposedVersion by extra("0.28.1")
+val sqliteVersion by extra("3.34.0")
 
 val kotlinLoggingVersion by extra("2.0.3")
 val logbackVersion by extra("1.2.3")
-val spekVersion by extra("2.0.13")
-val mockkVersion by extra("1.10.2")
+val spekVersion by extra("2.0.15")
+val mockkVersion by extra("1.10.3")
 
 dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinCoroutinesVersion")
