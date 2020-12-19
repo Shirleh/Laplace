@@ -13,12 +13,10 @@ private data class KittyPoint(val numberOfMeows: Int = 69) : InfluxPoint {
 
 private class KittyPointRepositoryImpl(writeApi: WriteApi) : InfluxWriteRepositoryImpl<KittyPoint>(writeApi)
 
-object InfluxWriteRepositoryImplTest : Spek({
+object InfluxWriteRepositoryFeature : Spek({
     Feature("InfluxRepository") {
         val writeApi = mockk<WriteApi>(relaxUnitFun = true)
-        val influxRepository by memoized {
-            KittyPointRepositoryImpl(writeApi)
-        }
+        val influxRepository: InfluxWriteRepository<KittyPoint> by memoized { KittyPointRepositoryImpl(writeApi) }
 
         Scenario("saving a single point of data") {
             val kittyData = KittyPoint()
